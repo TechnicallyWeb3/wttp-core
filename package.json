@@ -1,0 +1,76 @@
+{
+  "name": "wttp-core",
+  "version": "3.0.0",
+  "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
+  "main": "./dist/cjs/src/index.js",
+  "module": "./dist/esm/src/index.js",
+  "types": "./dist/types/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/src/index.js",
+      "require": "./dist/cjs/src/index.js",
+      "types": "./dist/types/src/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/esm/typechain-types/index.js",
+      "require": "./dist/cjs/typechain-types/index.js",
+      "types": "./dist/types/typechain-types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "LLM_CONTEXT.md",
+    "TIMESTAMP.md"
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "npm run clean && npm run compile && npm run typechain && npm run build:types && npm run build:cjs && npm run build:esm",
+    "build:types": "tsc --project tsconfig.build.json --declaration --emitDeclarationOnly --outDir dist/types",
+    "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir dist/cjs",
+    "build:esm": "tsc --project tsconfig.build.json --module esnext --outDir dist/esm",
+    "clean": "rimraf dist artifacts cache typechain-types",
+    "compile": "hardhat compile",
+    "typechain": "hardhat typechain",
+    "test": "npx hardhat test",
+    "prepublishOnly": "npm run test && npm run build",
+    "publish:all": "ts-node scripts/publish-packages.ts",
+    "publish:dry": "ts-node scripts/publish-packages.ts --dry-run",
+    "publish:beta": "ts-node scripts/publish-packages.ts --tag=beta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TechnicallyWeb3/wttp-core.git"
+  },
+  "keywords": [
+    "tw3",
+    "technicallyWeb3",
+    "llm-context",
+    "wttp",
+    "esp",
+    "web3",
+    "blockchain",
+    "ethereum",
+    "webhosting",
+    "smart-contracts",
+    "solidity",
+    "typescript"
+  ],
+  "author": "TechnicallyWeb3",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/TechnicallyWeb3/wttp-core/issues"
+  },
+  "homepage": "https://github.com/TechnicallyWeb3/wttp-core#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.24.1",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "@tw3/esp": "^0.4.2"
+  }
+}

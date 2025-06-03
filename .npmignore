@@ -1,0 +1,74 @@
+# Source files (compiled versions will be in dist/)
+src/
+tsconfig.json
+tsconfig.build.json
+
+# Development dependencies
+node_modules/
+.env
+.env.*
+
+# Build tools and scripts
+scripts/
+hardhat.config.*
+
+# Tests and test-related files
+test/
+**/test/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Documentation that shouldn't be in package
+docs/
+examples/
+audits/
+
+# Version control
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Package lock files
+package-lock.json
+yarn.lock
+
+# Alternative package.json files
+package.tw3.json
+package.json.backup
+
+# AI Agent files
+/agent-files
+
+# Cache directories
+cache/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Hardhat specific
+artifacts/
+cache/
+coverage/
+coverage.json
+
+# TypeChain generated files (will be compiled into dist)
+typechain-types/
+
+# Build process file
+BUILD_PROCESS.md 
