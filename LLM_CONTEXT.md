@@ -12,8 +12,8 @@ Key features:
 - **Complete Protocol Types** - Standardized WTTP/3.0 request/response structures with TypeScript integration
 - **Interface Contracts** - Production-ready Solidity interfaces for sites, gateways, storage, and permissions
 - **TypeChain Integration** - Full TypeScript type generation with factory contracts and artifact exports
-- **Multi-Storage Support** - Abstracted storage layer supporting IPFS, Arweave, and custom backends
-- **ESP Framework Integration** - Seamless integration with External Service Providers
+- **Multi-Storage Support** - Abstracted storage layer supporting IPFS, Arweave, and custom backends via ESP integration
+- **Role-Based Access Control** - Comprehensive permission system for resource management
 
 Target use cases:
 - Building decentralized websites and web applications
@@ -22,7 +22,7 @@ Target use cases:
 - Implementing custom permission and access control systems
 
 Technology stack:
-- Solidity ^0.8.24 for smart contract interfaces
+- Solidity ^0.8.20 for smart contract interfaces
 - TypeScript with strict type checking
 - Hardhat for compilation and TypeChain generation
 - Multi-format builds (CommonJS, ES Modules, TypeScript declarations)
@@ -33,10 +33,10 @@ Technology stack:
 WTTP Core Package Structure
 ├── Protocol Layer
 │   ├── WTTPTypes.sol ───────────── Core protocol type definitions
-│   ├── IWTTPSiteV3.sol ────────── Site interface (content serving)
-│   ├── IWTTPGateway.sol ───────── Gateway interface (routing/caching)
+│   ├── IWTTPSite.sol ──────────── Site interface (content serving)
+│   ├── IWTTPGateway.sol ───────── Gateway interface (routing/range handling)
 │   ├── IWTTPStorage.sol ───────── Storage interface (content storage)
-│   └── IWTTPPermissions.sol ───── Permission interface (access control)
+│   └── IWTTPPermissions.sol ───── Permission interface (role-based access)
 │
 ├── TypeScript Integration
 │   ├── TypeChain Generated ────── Contract type definitions & factories
@@ -50,13 +50,13 @@ WTTP Core Package Structure
 ```
 
 **Data Flow:**
-1. Client creates WTTP request → 2. Gateway routes to Site → 3. Site queries Storage → 4. Permission validation → 5. Response with StoragePointer
+1. Client creates WTTP request → 2. Gateway handles ranges/routing → 3. Site queries Storage → 4. Permission validation → 5. Response with data points
 
 **Component Relationships:**
-- **Sites** implement IWTTPSiteV3 and use IWTTPStorage + IWTTPPermissions
-- **Gateways** implement IWTTPGateway and route requests to Sites
+- **Sites** implement IWTTPSite and use IWTTPStorage + IWTTPPermissions
+- **Gateways** implement IWTTPGateway and provide range/caching functionality
 - **Storage Providers** implement IWTTPStorage for different backends
-- **Permission Systems** implement IWTTPPermissions for access control
+- **Permission Systems** implement IWTTPPermissions for role-based access control
 
 ## Package Structure
 
@@ -64,7 +64,7 @@ WTTP Core Package Structure
 ```typescript
 // Contract Types & Factories (Generated from Solidity)
 import {
-  IWTTPSiteV3, IWTTPSiteV3__factory,
+  IWTTPSite, IWTTPSite__factory,
   IWTTPGateway, IWTTPGateway__factory,
   IWTTPStorage, IWTTPStorage__factory,
   IWTTPPermissions, IWTTPPermissions__factory
@@ -72,14 +72,17 @@ import {
 
 // Protocol Types (from WTTPTypes.sol)
 import type {
-  RequestLineStruct, HEADRequestStruct, HEADResponseStruct,
-  StoragePointerStruct, PermissionLevel, Method
+  RequestLine, ResponseLine, HEADRequest, HEADResponse,
+  LOCATERequest, LOCATEResponse, GETRequest, GETResponse,
+  PUTRequest, PATCHRequest, DEFINERequest, DEFINEResponse,
+  OPTIONSResponse, ResourceMetadata, HeaderInfo, DataRegistration,
+  Method, CacheControl, Redirect, Range
 } from 'wttp-core';
 
 // Contract Artifacts (ABIs & Bytecode)
 import { artifacts } from 'wttp-core';
 
-// ESP Integration Types
+// ESP Integration Types (from @tw3/esp dependency)
 import type { 
   IDataPointRegistry, IDataPointStorage 
 } from 'wttp-core';
@@ -89,105 +92,154 @@ import type {
 ```typescript
 // TypeChain types only
 import { 
-  IWTTPSiteV3, IWTTPGateway, IWTTPStorage, IWTTPPermissions
+  IWTTPSite, IWTTPGateway, IWTTPStorage, IWTTPPermissions
 } from 'wttp-core/types';
 
 // Individual contract artifacts
-const siteABI = artifacts.IWTTPSiteV3.abi;
+const siteABI = artifacts.IWTTPSite.abi;
 const gatewayABI = artifacts.IWTTPGateway.abi;
 const storageABI = artifacts.IWTTPStorage.abi;
 const permissionsABI = artifacts.IWTTPPermissions.abi;
+const typesABI = artifacts.WTTPTypes.abi;
 ```
 
 ## Interface Documentation
 
-### IWTTPSiteV3 - Core Site Functionality
+### IWTTPSite - Core Site Functionality
 ```typescript
-interface IWTTPSiteV3 {
-  // Handle HEAD requests for content metadata
-  handleHEAD(request: HEADRequestStruct): Promise<HEADResponseStruct>;
+interface IWTTPSite {
+  // Get Data Point Storage contract instance
+  DPS(): Promise<IDataPointStorage>;
   
-  // Get current storage root hash for content resolution
-  getStorageRoot(): Promise<string>;
+  // Get Data Point Registry contract instance
+  DPR(): Promise<IDataPointRegistry>;
   
-  // Update storage root (admin only) - triggers content update
-  updateStorageRoot(newRoot: string): Promise<void>;
+  // Handle OPTIONS requests to check available methods
+  OPTIONS(optionsRequest: RequestLine): Promise<OPTIONSResponse>;
   
-  // Check if specific path exists in current storage tree
-  pathExists(path: string): Promise<boolean>;
+  // Handle HEAD requests for metadata retrieval
+  HEAD(headRequest: HEADRequest): Promise<HEADResponse>;
   
-  // Get site metadata and configuration
-  getSiteInfo(): Promise<SiteInfoStruct>;
+  // Handle LOCATE requests to find resource storage locations
+  LOCATE(locateRequest: HEADRequest): Promise<LOCATEResponse>;
+  
+  // Handle GET requests for content retrieval
+  GET(getRequest: HEADRequest): Promise<LOCATEResponse>;
 }
 ```
 
-### IWTTPGateway - Request Routing & Caching
+### IWTTPGateway - Request Routing & Range Handling
 ```typescript
 interface IWTTPGateway {
-  // Route request to appropriate site contract
-  routeRequest(
-    siteAddress: string, 
-    request: HEADRequestStruct
-  ): Promise<HEADResponseStruct>;
+  // Forward OPTIONS requests to a specified site
+  OPTIONS(
+    _site: string, 
+    _optionsRequest: RequestLine
+  ): Promise<OPTIONSResponse>;
   
-  // Cache response for future requests with TTL
-  cacheResponse(
-    key: string,
-    response: HEADResponseStruct,
-    ttl: number
-  ): Promise<void>;
+  // Handle GET requests with byte range support
+  GET(
+    _site: string, 
+    _getRequest: GETRequest
+  ): Promise<GETResponse>;
   
-  // Retrieve cached response if valid
-  getCachedResponse(key: string): Promise<HEADResponseStruct>;
+  // Forward HEAD requests to a specified site
+  HEAD(
+    _site: string, 
+    _headRequest: HEADRequest
+  ): Promise<HEADResponse>;
   
-  // Clear cache for specific key or pattern
-  invalidateCache(pattern: string): Promise<void>;
+  // Handle LOCATE requests with data point range support
+  LOCATE(
+    _site: string, 
+    _locateRequest: LOCATERequest
+  ): Promise<LOCATEResponse>;
 }
 ```
 
-### IWTTPStorage - Content Storage Abstraction
+### IWTTPStorage - Content Storage & Resource Management
 ```typescript
 interface IWTTPStorage {
-  // Store content and return storage pointer
-  store(content: BytesLike): Promise<StoragePointerStruct>;
+  // Get Data Point Storage contract instance
+  DPS(): Promise<IDataPointStorage>;
   
-  // Retrieve content by storage pointer
-  retrieve(pointer: StoragePointerStruct): Promise<string>;
+  // Get Data Point Registry contract instance
+  DPR(): Promise<IDataPointRegistry>;
   
-  // Check if content exists at hash
-  exists(contentHash: string): Promise<boolean>;
+  // Update the Data Point Registry contract address
+  setDPR(_dpr: string): Promise<void>;
   
-  // Get storage provider statistics and health
-  getStats(): Promise<StorageStatsStruct>;
+  // Create a new header in storage
+  createHeader(_header: HeaderInfo): Promise<string>;
   
-  // Pin content to prevent garbage collection
-  pin(contentHash: string): Promise<void>;
+  // Retrieve header information by its address
+  readHeader(_headerAddress: string): Promise<HeaderInfo>;
+  
+  // Set the default header information
+  setDefaultHeader(_header: HeaderInfo): Promise<void>;
+  
+  // Get metadata for a resource path
+  readMetadata(_path: string): Promise<ResourceMetadata>;
+  
+  // Update metadata for a resource
+  updateMetadata(_path: string, _metadata: ResourceMetadata): Promise<void>;
+  
+  // Delete metadata for a resource
+  deleteMetadata(_path: string): Promise<void>;
+  
+  // Create a new data point for a resource
+  createResource(
+    _path: string, 
+    _dataRegistration: DataRegistration
+  ): Promise<string>;
+  
+  // Get all data point addresses for a resource
+  readResource(_path: string): Promise<string[]>;
+  
+  // Update a specific chunk of a resource
+  updateResource(
+    _path: string, 
+    _dataPointAddress: string, 
+    _chunkIndex: BigNumberish
+  ): Promise<void>;
+  
+  // Remove a resource and its metadata
+  deleteResource(_path: string): Promise<void>;
+  
+  // Bulk upload of data points for a resource
+  uploadResource(
+    _path: string, 
+    _dataRegistration: DataRegistration[]
+  ): Promise<string[]>;
 }
 ```
 
-### IWTTPPermissions - Access Control System
+### IWTTPPermissions - Role-Based Access Control
 ```typescript
 interface IWTTPPermissions {
-  // Check if address has specific permission level
-  hasPermission(
-    user: string, 
-    level: PermissionLevel
-  ): Promise<boolean>;
+  // Check if an account has a specific role
+  hasRole(role: string, account: string): Promise<boolean>;
   
-  // Grant permission level to address (admin only)
-  grantPermission(
-    user: string,
-    level: PermissionLevel
-  ): Promise<void>;
+  // Create a new resource-specific admin role
+  createResourceRole(_role: string): Promise<void>;
   
-  // Revoke permission from address (admin only)
-  revokePermission(
-    user: string,
-    level: PermissionLevel
-  ): Promise<void>;
+  // Change the SITE_ADMIN_ROLE identifier
+  changeSiteAdmin(_newSiteAdmin: string): Promise<void>;
   
-  // Get all permissions for an address
-  getUserPermissions(user: string): Promise<PermissionLevel[]>;
+  // Grant a role to an account
+  grantRole(role: string, account: string): Promise<void>;
+  
+  // Revoke a role from an account
+  revokeRole(role: string, account: string): Promise<void>;
+  
+  // Renounce a role for the calling account
+  renounceRole(role: string, callerConfirmation: string): Promise<void>;
+  
+  // Get the admin role that controls a role
+  getRoleAdmin(role: string): Promise<string>;
+  
+  // Get the default admin role
+  DEFAULT_ADMIN_ROLE(): Promise<string>;
 }
 ```
 
@@ -218,12 +270,17 @@ const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = {
   // ... other networks
 };
 
-// Deployment helper
-async function deployWTTPStack(
-  deployer: ethers.Signer,
-  config: DeploymentConfig
-): Promise<WTTPDeployment> {
-  // Implementation would deploy all contracts in correct order
+// Method enum for type safety
+enum Method {
+  HEAD = 0,
+  GET = 1,
+  POST = 2,
+  PUT = 3,
+  PATCH = 4,
+  DELETE = 5,
+  OPTIONS = 6,
+  LOCATE = 7,
+  DEFINE = 8
 }
 ```
 
@@ -250,7 +307,7 @@ function validateConfig(config: WTTPConfig): void {
 ### Basic Site Contract Usage
 ```typescript
 import { ethers } from 'ethers';
-import { IWTTPSiteV3__factory, type HEADRequestStruct } from 'wttp-core';
+import { IWTTPSite__factory, type HEADRequest, Method } from 'wttp-core';
 
 async function querySite(
   provider: ethers.Provider,
@@ -258,14 +315,14 @@ async function querySite(
   path: string
 ) {
   // Connect to site contract
-  const site = IWTTPSiteV3__factory.connect(siteAddress, provider);
+  const site = IWTTPSite__factory.connect(siteAddress, provider);
   
   // Prepare HEAD request
-  const request: HEADRequestStruct = {
+  const request: HEADRequest = {
     requestLine: {
       protocol: "WTTP/3.0",
       path: path,
-      method: 1 // Method.HEAD
+      method: Method.HEAD
     },
     ifModifiedSince: 0,
     ifNoneMatch: "0x0000000000000000000000000000000000000000000000000000000000000000"
@@ -273,15 +330,15 @@ async function querySite(
   
   try {
     // Execute request
-    const response = await site.handleHEAD(request);
+    const response = await site.HEAD(request);
     
     console.log('Response:', {
-      statusCode: response.statusCode,
-      contentType: response.contentType,
-      contentLength: response.contentLength.toString(),
-      lastModified: new Date(Number(response.lastModified) * 1000),
-      etag: response.etag,
-      storageHash: response.storagePointer.contentHash
+      statusCode: response.responseLine.code,
+      protocol: response.responseLine.protocol,
+      mimeType: response.metadata.mimeType,
+      size: response.metadata.size.toString(),
+      lastModified: new Date(Number(response.metadata.lastModified) * 1000),
+      etag: response.etag
     });
     
     return response;
@@ -296,13 +353,14 @@ async function querySite(
 ```typescript
 import { 
   IWTTPGateway__factory, 
-  type HEADRequestStruct,
-  type HEADResponseStruct 
+  type HEADRequest,
+  type GETRequest,
+  type GETResponse,
+  Method 
 } from 'wttp-core';
 
 class WTTPGatewayClient {
   private gateway: IWTTPGateway;
-  private cache = new Map<string, { response: HEADResponseStruct; expires: number }>();
   
   constructor(
     provider: ethers.Provider,
@@ -311,45 +369,73 @@ class WTTPGatewayClient {
     this.gateway = IWTTPGateway__factory.connect(gatewayAddress, provider);
   }
   
-  async routeRequest(
+  async getContent(
     siteAddress: string,
     path: string,
-    options: { useCache?: boolean; cacheTTL?: number } = {}
-  ): Promise<HEADResponseStruct> {
-    const { useCache = true, cacheTTL = 300 } = options;
+    options: { 
+      rangeBytes?: { start: number; end: number };
+      useHead?: boolean;
+    } = {}
+  ): Promise<GETResponse | HEADResponse> {
+    const { rangeBytes, useHead = false } = options;
     
-    const request: HEADRequestStruct = {
-      requestLine: {
-        protocol: "WTTP/3.0",
-        path,
-        method: 1 // HEAD
+    if (useHead) {
+      // Use HEAD request for metadata only
+      const headRequest: HEADRequest = {
+        requestLine: {
+          protocol: "WTTP/3.0",
+          path,
+          method: Method.HEAD
+        },
+        ifModifiedSince: 0,
+        ifNoneMatch: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      };
+      
+      return await this.gateway.HEAD(siteAddress, headRequest);
+    } else {
+      // Use GET request for content
+      const getRequest: GETRequest = {
+        head: {
+          requestLine: {
+            protocol: "WTTP/3.0",
+            path,
+            method: Method.GET
+          },
+          ifModifiedSince: 0,
+          ifNoneMatch: "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        rangeBytes: rangeBytes ? {
+          start: rangeBytes.start,
+          end: rangeBytes.end
+        } : { start: 0, end: 0 } // 0 means to end
+      };
+      
+      return await this.gateway.GET(siteAddress, getRequest);
+    }
+  }
+  
+  async locateDataPoints(
+    siteAddress: string,
+    path: string,
+    chunkRange?: { start: number; end: number }
+  ): Promise<LOCATEResponse> {
+    const locateRequest: LOCATERequest = {
+      head: {
+        requestLine: {
+          protocol: "WTTP/3.0",
+          path,
+          method: Method.LOCATE
+        },
+        ifModifiedSince: 0,
+        ifNoneMatch: "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
-      ifModifiedSince: 0,
-      ifNoneMatch: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      rangeChunks: chunkRange ? {
+        start: chunkRange.start,
+        end: chunkRange.end
+      } : { start: 0, end: 0 } // 0 means all chunks
     };
     
-    // Check local cache first
-    if (useCache) {
-      const cacheKey = `${siteAddress}:${path}`;
-      const cached = this.cache.get(cacheKey);
-      if (cached && cached.expires > Date.now()) {
-        return cached.response;
-      }
-    }
-    
-    // Route through gateway
-    const response = await this.gateway.routeRequest(siteAddress, request);
-    
-    // Cache successful responses
-    if (useCache && response.statusCode === 200) {
-      const cacheKey = `${siteAddress}:${path}`;
-      this.cache.set(cacheKey, {
-        response,
-        expires: Date.now() + cacheTTL * 1000
-      });
-    }
-    
-    return response;
+    return await this.gateway.LOCATE(siteAddress, locateRequest);
   }
 }
 ```
@@ -358,7 +444,9 @@ class WTTPGatewayClient {
 ```typescript
 import { 
   IWTTPStorage__factory,
-  type StoragePointerStruct 
+  type ResourceMetadata,
+  type HeaderInfo,
+  type DataRegistration
 } from 'wttp-core';
 
 class WTTPStorageClient {
@@ -368,43 +456,91 @@ class WTTPStorageClient {
     this.storage = IWTTPStorage__factory.connect(storageAddress, provider);
   }
   
-  async uploadFile(
-    content: string,
-    mimeType: string,
-    options: { pin?: boolean } = {}
-  ): Promise<StoragePointerStruct> {
-    const contentBytes = ethers.toUtf8Bytes(content);
-    
-    // Store content
-    const pointer = await this.storage.store(contentBytes);
-    
-    // Pin if requested
-    if (options.pin) {
-      await this.storage.pin(pointer.contentHash);
+  async uploadResource(
+    path: string,
+    chunks: { data: string; publisher: string }[],
+    metadata: {
+      mimeType: string;
+      charset?: string;
+      encoding?: string;
+      language?: string;
     }
+  ): Promise<string[]> {
+    // Prepare data registrations
+    const dataRegistrations: DataRegistration[] = chunks.map((chunk, index) => ({
+      data: ethers.toUtf8Bytes(chunk.data),
+      chunkIndex: index,
+      publisher: chunk.publisher
+    }));
     
-    console.log('Stored content:', {
-      hash: pointer.contentHash,
-      size: pointer.size.toString(),
-      mimeType: pointer.mimeType,
-      timestamp: new Date(Number(pointer.lastModified) * 1000)
+    // Upload all chunks
+    const dataPointAddresses = await this.storage.uploadResource(path, dataRegistrations);
+    
+    // Update metadata
+    const resourceMetadata: ResourceMetadata = {
+      mimeType: ethers.encodeBytes32String(metadata.mimeType.slice(0, 31)),
+      charset: metadata.charset ? ethers.encodeBytes32String(metadata.charset.slice(0, 31)) : "0x0000000000000000000000000000000000000000000000000000000000000000",
+      encoding: metadata.encoding ? ethers.encodeBytes32String(metadata.encoding.slice(0, 31)) : "0x0000000000000000000000000000000000000000000000000000000000000000",
+      language: metadata.language ? ethers.encodeBytes32String(metadata.language.slice(0, 31)) : "0x0000000000000000000000000000000000000000000000000000000000000000",
+      size: chunks.reduce((total, chunk) => total + chunk.data.length, 0),
+      version: 1,
+      lastModified: Math.floor(Date.now() / 1000),
+      header: "0x0000000000000000000000000000000000000000000000000000000000000000" // Default header
+    };
+    
+    await this.storage.updateMetadata(path, resourceMetadata);
+    
+    console.log('Uploaded resource:', {
+      path,
+      chunks: dataPointAddresses.length,
+      dataPoints: dataPointAddresses
     });
     
-    return pointer;
+    return dataPointAddresses;
   }
   
-  async downloadFile(pointer: StoragePointerStruct): Promise<string> {
-    const exists = await this.storage.exists(pointer.contentHash);
-    if (!exists) {
-      throw new Error(`Content not found: ${pointer.contentHash}`);
-    }
+  async getResource(path: string): Promise<{
+    metadata: ResourceMetadata;
+    dataPoints: string[];
+  }> {
+    const [metadata, dataPoints] = await Promise.all([
+      this.storage.readMetadata(path),
+      this.storage.readResource(path)
+    ]);
     
-    const content = await this.storage.retrieve(pointer);
-    return content;
+    return { metadata, dataPoints };
   }
   
-  async getStorageHealth(): Promise<any> {
-    return await this.storage.getStats();
+  async createCustomHeader(
+    allowedMethods: Method[],
+    cacheControl?: {
+      maxAge?: number;
+      noStore?: boolean;
+      noCache?: boolean;
+      immutableFlag?: boolean;
+      publicFlag?: boolean;
+    }
+  ): Promise<string> {
+    // Convert methods array to bitmask
+    const methodsBitmask = allowedMethods.reduce((mask, method) => mask | (1 << method), 0);
+    
+    const headerInfo: HeaderInfo = {
+      methods: methodsBitmask,
+      cache: {
+        maxAge: cacheControl?.maxAge || 0,
+        noStore: cacheControl?.noStore || false,
+        noCache: cacheControl?.noCache || false,
+        immutableFlag: cacheControl?.immutableFlag || false,
+        publicFlag: cacheControl?.publicFlag || true
+      },
+      redirect: {
+        code: 0,
+        location: ""
+      },
+      resourceAdmin: "0x0000000000000000000000000000000000000000000000000000000000000000"
+    };
+    
+    return await this.storage.createHeader(headerInfo);
   }
 }
 ```
@@ -415,17 +551,19 @@ class WTTPStorageClient {
 ```typescript
 // Always use generated types from the package
 import type { 
-  HEADRequestStruct, 
-  HEADResponseStruct,
-  StoragePointerStruct,
-  PermissionLevel 
+  HEADRequest, 
+  HEADResponse,
+  LOCATERequest,
+  LOCATEResponse,
+  Method,
+  ResourceMetadata
 } from 'wttp-core';
 
 // Type-safe request construction
 function createWTTPRequest(
   path: string, 
   method: Method = Method.HEAD
-): HEADRequestStruct {
+): HEADRequest {
   return {
     requestLine: {
       protocol: "WTTP/3.0" as const,  // Use const assertion
@@ -438,23 +576,31 @@ function createWTTPRequest(
 }
 
 // Type narrowing for response validation
-function isValidResponse(response: HEADResponseStruct): boolean {
+function isValidResponse(response: HEADResponse): boolean {
   return (
-    response.statusCode >= 200 && 
-    response.statusCode < 300 &&
-    ethers.isHexString(response.storagePointer.contentHash, 32)
+    response.responseLine.code >= 200 && 
+    response.responseLine.code < 300 &&
+    response.responseLine.protocol === "WTTP/3.0"
   );
 }
 
-// Generic type usage for multi-chain support
-interface ChainAwareClient<T extends ethers.Provider> {
-  provider: T;
-  chainId: number;
-  contracts: Record<string, ethers.Contract>;
+// Method bitmask utilities
+function methodsToMask(methods: Method[]): number {
+  return methods.reduce((mask, method) => mask | (1 << method), 0);
+}
+
+function maskToMethods(mask: number): Method[] {
+  const methods: Method[] = [];
+  for (let i = 0; i < 9; i++) {
+    if (mask & (1 << i)) {
+      methods.push(i as Method);
+    }
+  }
+  return methods;
 }
 ```
 
-### Type Assertions and Narrowing
+### Type Assertions and Runtime Validation
 ```typescript
 // Safe type assertions with validation
 function assertValidAddress(address: string): asserts address is string {
@@ -464,17 +610,17 @@ function assertValidAddress(address: string): asserts address is string {
 }
 
 // Type guards for runtime validation
-function isStoragePointer(obj: any): obj is StoragePointerStruct {
+function isResourceMetadata(obj: any): obj is ResourceMetadata {
   return (
     obj &&
-    typeof obj.storageContract === 'string' &&
-    typeof obj.contentHash === 'string' &&
     typeof obj.mimeType === 'string' &&
-    ethers.isAddress(obj.storageContract)
+    typeof obj.size === 'bigint' &&
+    typeof obj.version === 'bigint' &&
+    typeof obj.lastModified === 'bigint'
   );
 }
 
-// Discriminated unions for error handling
+// Error handling with discriminated unions
 type WTTPResult<T> = 
   | { success: true; data: T }
   | { success: false; error: string; code: number };
@@ -541,7 +687,7 @@ async function handleWTTPOperation<T>(
       }
       
       // Permission errors
-      if (error.message.includes('permission') || error.message.includes('unauthorized')) {
+      if (error.message.includes('Forbidden') || error.message.includes('InvalidRole')) {
         throw new WTTPError(
           `Permission denied: ${context}`,
           403,
@@ -561,107 +707,27 @@ async function handleWTTPOperation<T>(
 }
 ```
 
-### Event Listening Examples
-```typescript
-// Listen for site updates
-async function watchSiteUpdates(
-  site: IWTTPSiteV3,
-  callback: (newRoot: string) => void
-) {
-  // Filter for StorageRootUpdated events
-  const filter = site.filters.StorageRootUpdated();
-  
-  site.on(filter, (oldRoot, newRoot, event) => {
-    console.log('Site updated:', { oldRoot, newRoot, block: event.blockNumber });
-    callback(newRoot);
-  });
-}
-
-// Batch event processing
-async function processStorageEvents(
-  storage: IWTTPStorage,
-  fromBlock: number,
-  toBlock: number
-) {
-  const filter = storage.filters.ContentStored();
-  const events = await storage.queryFilter(filter, fromBlock, toBlock);
-  
-  for (const event of events) {
-    console.log('Content stored:', {
-      hash: event.args?.contentHash,
-      size: event.args?.size?.toString(),
-      block: event.blockNumber
-    });
-  }
-}
-```
-
-### Multi-chain/Network Support
-```typescript
-class MultiChainWTTPClient {
-  private clients: Map<number, {
-    provider: ethers.Provider;
-    contracts: Record<string, ethers.Contract>;
-  }> = new Map();
-  
-  addNetwork(
-    chainId: number,
-    provider: ethers.Provider,
-    contracts: Record<string, string>
-  ) {
-    const contractInstances: Record<string, ethers.Contract> = {};
-    
-    if (contracts.site) {
-      contractInstances.site = IWTTPSiteV3__factory.connect(contracts.site, provider);
-    }
-    if (contracts.gateway) {
-      contractInstances.gateway = IWTTPGateway__factory.connect(contracts.gateway, provider);
-    }
-    
-    this.clients.set(chainId, {
-      provider,
-      contracts: contractInstances
-    });
-  }
-  
-  async querySiteOnChain(
-    chainId: number,
-    path: string
-  ): Promise<HEADResponseStruct> {
-    const client = this.clients.get(chainId);
-    if (!client || !client.contracts.site) {
-      throw new Error(`No site contract on chain ${chainId}`);
-    }
-    
-    const site = client.contracts.site as IWTTPSiteV3;
-    const request = createWTTPRequest(path);
-    
-    return await site.handleHEAD(request);
-  }
-}
-```
-
 ### Performance Optimization
 ```typescript
 // Batch operations for efficiency
-async function batchRequests(
-  site: IWTTPSiteV3,
+async function batchSiteRequests(
+  site: IWTTPSite,
   paths: string[],
   options: { concurrency?: number } = {}
-): Promise<HEADResponseStruct[]> {
+): Promise<HEADResponse[]> {
   const { concurrency = 5 } = options;
   
-  const requests = paths.map(path => createWTTPRequest(path));
+  const requests = paths.map(path => createWTTPRequest(path, Method.HEAD));
   
   // Process in chunks to avoid overwhelming the RPC
-  const results: HEADResponseStruct[] = [];
+  const results: HEADResponse[] = [];
   for (let i = 0; i < requests.length; i += concurrency) {
     const chunk = requests.slice(i, i + concurrency);
-    const chunkPromises = chunk.map(req => site.handleHEAD(req));
+    const chunkPromises = chunk.map(req => site.HEAD(req));
     const chunkResults = await Promise.allSettled(chunkPromises);
     
     results.push(...chunkResults
-      .filter((result): result is PromiseFulfilledResult<HEADResponseStruct> => 
+      .filter((result): result is PromiseFulfilledResult<HEADResponse> => 
         result.status === 'fulfilled'
       )
       .map(result => result.value)
@@ -692,27 +758,22 @@ class ProviderPool {
 
 ### Security Considerations
 - **Address Validation**: Always validate contract addresses before connecting
-- **Permission Checks**: Verify user permissions before write operations
+- **Role Checks**: Verify user roles before write operations using `hasRole()`
 - **Input Sanitization**: Validate all path and content inputs
-- **Reentrancy Protection**: Be aware of potential reentrancy in storage operations
-- **Gas Limits**: Set appropriate gas limits for complex operations
-
-### Gas Optimization Tips
-- **Batch Operations**: Combine multiple calls where possible
-- **Static Calls**: Use `staticCall` for read-only operations to save gas
-- **Event Filtering**: Use specific event filters to reduce query load
-- **Caching**: Implement local caching to reduce redundant calls
+- **Method Validation**: Check allowed methods using OPTIONS before requests
+- **Gas Limits**: Set appropriate gas limits for storage operations
 
 ### Protocol-Specific Behaviors
 - **WTTP/3.0 Compliance**: All requests must use "WTTP/3.0" protocol identifier
-- **Content Addressing**: Content is addressed by cryptographic hash
-- **Immutable Storage**: Stored content is immutable; updates require new storage roots
-- **Permission Inheritance**: Permission levels are hierarchical (ADMIN > WRITE > READ)
+- **Method Enum**: Use the Method enum for type safety and correct values
+- **Data Point Addressing**: Content is stored in chunks via ESP data points
+- **Role-Based Access**: Use bytes32 role identifiers for permission management
+- **Header System**: Headers define allowed methods and cache behavior
 
 ### Upgrade/Migration Considerations
-- **Interface Versioning**: New interface versions maintain backward compatibility
-- **Storage Migration**: Plan for storage root updates when migrating content
-- **Contract Upgrades**: Use proxy patterns for upgradeable implementations
+- **Interface Stability**: Current interfaces are designed for long-term stability
+- **Storage Migration**: Use storage contract upgrade patterns for data migration
+- **Role Migration**: Plan role transfers when upgrading permission systems
 - **Type Updates**: Keep TypeScript types synchronized with contract changes
 
 ## Quick Reference
@@ -720,31 +781,37 @@ class ProviderPool {
 ### Core Functions Summary
 | Interface | Method | Purpose | Gas Cost |
 |-----------|--------|---------|----------|
-| IWTTPSiteV3 | `handleHEAD()` | Get content metadata | Low (view) |
-| IWTTPSiteV3 | `getStorageRoot()` | Get current storage root | Low (view) |
-| IWTTPSiteV3 | `updateStorageRoot()` | Update content root | Medium |
-| IWTTPGateway | `routeRequest()` | Route to site | Low (view) |
-| IWTTPGateway | `cacheResponse()` | Cache response | Medium |
-| IWTTPStorage | `store()` | Store content | High |
-| IWTTPStorage | `retrieve()` | Get content | Low (view) |
-| IWTTPPermissions | `hasPermission()` | Check access | Low (view) |
-| IWTTPPermissions | `grantPermission()` | Grant access | Medium |
+| IWTTPSite | `HEAD()` | Get resource metadata | Low (view) |
+| IWTTPSite | `GET()` | Get resource location | Low (view) |
+| IWTTPSite | `LOCATE()` | Get data point addresses | Low (view) |
+| IWTTPSite | `OPTIONS()` | Get allowed methods | Low (view) |
+| IWTTPGateway | `HEAD()` | Proxy HEAD to site | Low (view) |
+| IWTTPGateway | `GET()` | Handle ranged GET | Low (view) |
+| IWTTPStorage | `uploadResource()` | Store resource chunks | High |
+| IWTTPStorage | `readResource()` | Get data points | Low (view) |
+| IWTTPPermissions | `hasRole()` | Check role | Low (view) |
+| IWTTPPermissions | `grantRole()` | Grant role | Medium |
 
-### Permission Levels
-| Level | Value | Capabilities |
-|-------|-------|-------------|
-| NONE | 0 | No access |
-| READ | 1 | View content |
-| WRITE | 2 | Update content + READ |
-| ADMIN | 3 | Manage permissions + WRITE |
+### Method Enum Values
+| Method | Value | Purpose |
+|--------|-------|---------|
+| HEAD | 0 | Get metadata only |
+| GET | 1 | Get content |
+| POST | 2 | Submit data |
+| PUT | 3 | Create/replace resource |
+| PATCH | 4 | Update resource parts |
+| DELETE | 5 | Remove resource |
+| OPTIONS | 6 | Query allowed methods |
+| LOCATE | 7 | Get storage locations |
+| DEFINE | 8 | Update headers |
 
 ### Common Parameters
 | Parameter | Type | Format | Example |
 |-----------|------|--------|---------|
 | `protocol` | string | "WTTP/3.0" | "WTTP/3.0" |
 | `path` | string | Unix-style path | "/index.html" |
-| `method` | number | Method enum | 1 (HEAD) |
-| `contentHash` | string | Hex string | "0x1234..." |
+| `method` | Method | Enum value | Method.HEAD |
+| `role` | bytes32 | Hex string | "0x1234..." |
 | `address` | string | Ethereum address | "0xabcd..." |
 
 ### Installation Commands
@@ -762,4 +829,4 @@ npm run build  # Compile contracts and generate types
 
 ---
 
-*This LLM context provides complete integration guidance for WTTP Core v3.0. All code examples are production-ready and follow TypeScript best practices.* 
+*This LLM context provides complete integration guidance for WTTP Core v3.0. All code examples are production-ready and follow TypeScript best practices. Interface definitions match the actual Solidity contracts.* 

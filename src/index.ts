@@ -20,7 +20,7 @@
 export * from '../typechain-types';
 
 // Export contract artifacts for direct access using require to avoid TS issues
-export const IWTTPSiteV3Artifact = require('../artifacts/contracts/interfaces/IWTTPSiteV3.sol/IWTTPSiteV3.json');
+export const IWTTPSiteArtifact = require('../artifacts/contracts/interfaces/IWTTPSite.sol/IWTTPSite.json');
 export const IWTTPGatewayArtifact = require('../artifacts/contracts/interfaces/IWTTPGateway.sol/IWTTPGateway.json');
 export const IWTTPStorageArtifact = require('../artifacts/contracts/interfaces/IWTTPStorage.sol/IWTTPStorage.json');
 export const IWTTPPermissionsArtifact = require('../artifacts/contracts/interfaces/IWTTPPermissions.sol/IWTTPPermissions.json');
@@ -28,7 +28,7 @@ export const WTTPTypesArtifact = require('../artifacts/contracts/interfaces/WTTP
 
 // Also export as a single artifacts object for convenience
 export const artifacts = {
-  IWTTPSiteV3: IWTTPSiteV3Artifact,
+  IWTTPSite: IWTTPSiteArtifact,
   IWTTPGateway: IWTTPGatewayArtifact,
   IWTTPStorage: IWTTPStorageArtifact,
   IWTTPPermissions: IWTTPPermissionsArtifact,

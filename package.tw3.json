@@ -24,6 +24,9 @@
     "LLM_CONTEXT.md",
     "TIMESTAMP.md"
   ],
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "build": "npm run clean && npm run compile && npm run typechain && npm run build:types && npm run build:cjs && npm run build:esm",
     "build:types": "tsc --project tsconfig.build.json --declaration --emitDeclarationOnly --outDir dist/types",
@@ -65,9 +68,9 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.24.1",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
-    "rimraf": "^6.0.1",
     "@tw3/esp": "^0.4.2"
   }
 }
