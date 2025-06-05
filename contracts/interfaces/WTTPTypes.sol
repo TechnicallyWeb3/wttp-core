@@ -281,23 +281,23 @@ function getHeaderAddress(HeaderInfo memory _header) pure returns (bytes32) {
 /// @title Query Structure
 /// @notice Represents a key-value pair in a URI query string
 /// @dev Used for parsing and processing query parameters
-struct Query {
-    /// @notice The key part of the query parameter
-    string key;
-    /// @notice The value part of the query parameter
-    string value;
-}
-/// @title URI Structure
-/// @notice Represents a Uniform Resource Identifier
-/// @dev Used for parsing and processing URIs
-struct URI {
-    /// @notice The path part of the URI
-    string path;
-    /// @notice The query parameters of the URI
-    Query[] query;
-    /// @notice The fragment part of the URI
-    string fragment;
-}
+// struct Query {
+//     /// @notice The key part of the query parameter
+//     string key;
+//     /// @notice The value part of the query parameter
+//     string value;
+// }
+// /// @title URI Structure
+// /// @notice Represents a Uniform Resource Identifier
+// /// @dev Used for parsing and processing URIs
+// struct URI {
+//     /// @notice The path part of the URI
+//     string path;
+//     /// @notice The query parameters of the URI
+//     Query[] query;
+//     /// @notice The fragment part of the URI
+//     string fragment;
+// }
 
 // OPTIONSRequest is just a path string
 

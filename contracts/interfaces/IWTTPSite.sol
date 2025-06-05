@@ -53,7 +53,7 @@ interface IWTTPSite {
     /// @param getRequest Request information
     /// @return locateResponse Response containing resource and storage locations
     function GET(
-        HEADRequest memory getRequest
+        LOCATERequest memory getRequest
     ) external view returns (LOCATEResponse memory locateResponse);
     
     /// @notice Handles PUT requests to create or replace resources
