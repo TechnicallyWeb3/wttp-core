@@ -1,5 +1,5 @@
 {
-  "name": "@wttp/core",
+  "name": "wttp-core",
   "version": "0.2.1",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
