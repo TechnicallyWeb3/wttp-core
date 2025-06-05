@@ -114,14 +114,14 @@ function main(): void {
     publishPackage('wttp-core', 'package.json', options);
     
     // Publish organization scoped package (temporarily swaps package.json)
-    publishPackage('@tw3/wttp-core', 'package.tw3.json', options);
+    publishPackage('@wttp/core', 'package.wttp.json', options);
     
     console.log('\n🎉 All packages published successfully!');
     
     if (!dryRun) {
       console.log('\n📋 Installation commands:');
       console.log('npm install wttp-core');
-      console.log('npm install @tw3/wttp-core');
+      console.log('npm install @wttp/core');
     }
     
   } catch (error) {

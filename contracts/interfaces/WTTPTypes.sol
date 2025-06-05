@@ -72,19 +72,37 @@ event ResourceUpdated(string path, uint256 chunkIndex);
 event ResourceDeleted(string path);
 
 // ============ Errors ============
+/// @notice Error thrown when an invalid header is used
+/// @param header The header that was invalid
+error InvalidHeader(HeaderInfo header);
 /// @notice Error thrown when attempting to modify an immutable resource
 /// @param path Path of the immutable resource
-error ResourceImmutable(string path);
+
+/// @dev WTTP revert status codes are prefixed with _ so handler can parse the error codes
+
 /// @notice Error thrown when an account lacks permission for a role
 /// @param account Address that attempted the action
 /// @param role Required role for the action
-error Forbidden(address account, bytes32 role);
-// error OutOfBoundsChunk(string path, uint256 chunkIndex);
+/// @param path Path of the resource
+error _403(address account, bytes32 role, string path);
+/// @notice Error thrown when a resource does not exist
+/// @param path Path of the resource
+error _404(string path);
+/// @notice Error thrown when a method is not allowed for a resource
+/// @param method Method that was attempted
+/// @param path Path of the resource
+error _405(address account, Method method, string path);
+/// @notice Error thrown when attempting to modify an immutable resource
+/// @param path Path of the immutable resource
+error _409(string path);
+/// @notice Error thrown when a resource has been permanently deleted
+/// @param path Path of the deleted resource
+error _410(string path);
 
 // ============ Enum Definitions ============
 
-/// @title HTTP Methods Enum
-/// @notice Defines supported HTTP methods in the WTTP protocol
+/// @title WTTP Methods Enum
+/// @notice Defines supported WTTP methods in the WTTP protocol
 /// @dev Used for method-based access control and request handling
 enum Method {
     /// @notice Retrieve only resource headers and metadata
@@ -107,64 +125,93 @@ enum Method {
     DEFINE
 }
 
+/// @title Cache Preset Enum
+/// @notice Defines preset cache control directives
+/// @dev Used for resource header management
+enum CachePreset {
+    /// @notice No cache control directives
+    NONE,
+    /// @notice Cache control directives for a resource that should not be cached
+    NO_CACHE,
+    /// @notice Cache control directives for a resource that should be cached
+    DEFAULT,
+    /// @notice Cache control directives for a resource that should be cached for a short time
+    SHORT,
+    /// @notice Cache control directives for a resource that should be cached for a medium time
+    MEDIUM,
+    /// @notice Cache control directives for a resource that should be cached for a long time
+    LONG,
+    /// @notice Cache control directives for a resource that should be cached indefinitely
+    PERMANENT
+}
+
+/// @title CORS Policy Presets for Common Use Cases
+enum CORSPreset {
+    /// @notice No CORS policy
+    NONE,           // 0: Use custom configuration only
+    /// @notice Public CORS policy
+    PUBLIC,         // 1: Wide open - any origin, basic methods
+    /// @notice Restricted CORS policy
+    RESTRICTED,     // 2: Same-origin only  
+    /// @notice API CORS policy
+    API,            // 3: Common API configuration
+    /// @notice Mixed access CORS policy
+    MIXED_ACCESS,   // 4: Public read, restricted write
+    /// @notice Private CORS policy
+    PRIVATE         // 5: Admin/role access only
+}
+
 // ============ Struct Definitions ============
 
 /// @title Cache Control Structure
-/// @notice Defines HTTP cache control directives
-/// @dev Maps to standard HTTP cache-control header fields
+/// @notice Defines WTTP cache control directives
+/// @dev Maps to standard WTTP cache-control header fields
 struct CacheControl {
-    /// @notice Maximum age in seconds for client caching
-    uint256 maxAge;
-    // /// @notice Maximum age in seconds for shared caching
-    // uint256 sMaxage;
-    /// @notice Prevents storing the response in any cache
-    bool noStore;
-    /// @notice Requires revalidation before using cached copy
-    bool noCache;
     /// @notice Indicates resource will never change
     bool immutableFlag;
-    /// @notice Indicates response may be cached by any cache
-    bool publicFlag;
-    // /// @notice Requires revalidation after becoming stale
-    // bool mustRevalidate;
-    // /// @notice Requires proxy revalidation
-    // bool proxyRevalidate;
-    // /// @notice Requires underscores in the cache key
-    // bool mustUnderstand;
-    // /// @notice Grace period for serving stale content during revalidation
-    // uint256 staleWhileRevalidate;
-    // /// @notice Grace period for serving stale content during errors
-    // uint256 staleIfError;
+    /// @notice Cache control preset for the client
+    CachePreset preset;
+    /// @notice Cache control directives for the client, stored as comma separated string eg. "Max-Age=3600, No-Cache"
+    /// @dev preset should be NONE if custom is set or it may cause undesired behavior
+    string custom;
 }
-
+/// @title CORS Policy Structure
+/// @notice Defines CORS policy for a resource
+/// @dev Used for resource header management
+struct CORSPolicy {
+    /// @notice Bitmask of allowed methods
+    uint16 methods;
+    /// @notice Array of access policies for the resource
+    /// @dev Each policy is a role identifier use Method enum as index
+    bytes32[] origins;
+    /// @notice CORS policy preset for the resource
+    CORSPreset preset;
+    /// @notice String for client side CORS verification
+    string custom;
+}
 /// @title Redirect Structure
-/// @notice Defines HTTP redirect information
-/// @dev Maps to standard HTTP redirect response
+/// @notice Defines WTTP redirect information
+/// @dev Maps to standard WTTP redirect response
 struct Redirect {
-    /// @notice HTTP status code for redirect (3xx)
+    /// @notice WTTP status code for redirect (3xx)
     uint16 code;
     /// @notice Target location for redirect in URL format
     string location; 
 }
 
 /// @title Header Information Structure
-/// @notice Combines all HTTP header related information
+/// @notice Combines all WTTP header related information
 /// @dev Used for resource header management
 struct HeaderInfo {
-    /// @notice Allowed HTTP methods bitmask (created using methodsToMask)
-    uint16 methods;
-    /// @notice Cache control directives
+    /// @notice Cache control directives, using CachePreset enum with custom directives if needed
     CacheControl cache;
+    /// @notice CORS policy for the resource
+    CORSPolicy cors;
     /// @notice Redirect information if applicable
     Redirect redirect;
-    /// @notice Role identifier for resource administration
-    bytes32 resourceAdmin;
 }
 
-/// @title Resource Metadata Structure
-/// @notice Stores metadata about web resources
-/// @dev Used to track resource properties and modifications
-struct ResourceMetadata {
+struct ResourceProperties {
     /// @notice MIME type of the resource (2-byte identifier)
     bytes2 mimeType;
     /// @notice Character set of the resource (2-byte identifier)
@@ -173,6 +220,14 @@ struct ResourceMetadata {
     bytes2 encoding;
     /// @notice Language of the resource (2-byte identifier)
     bytes2 language;
+}
+
+/// @title Resource Metadata Structure
+/// @notice Stores metadata about web resources
+/// @dev Used to track resource properties and modifications
+struct ResourceMetadata {
+    /// @notice Resource properties
+    ResourceProperties properties;
     /// @notice Size of the resource in bytes
     uint256 size;
     /// @notice Version number of the resource
@@ -200,7 +255,7 @@ struct DataRegistration {
 // Method Bitmask Converter
 // Converts array of methods to a bitmask representation
 // Used for efficient method permission storage (1 bit per method)
-// methods Array of HTTP methods to convert
+// methods Array of WTTP methods to convert
 // uint16 Bitmask representing allowed methods
 function methodsToMask(Method[] memory methods) pure returns (uint16) {
     uint16 mask = 0;
@@ -220,36 +275,38 @@ function getHeaderAddress(HeaderInfo memory _header) pure returns (bytes32) {
 }
 
 // ============ WTTP Site Contract ============
-/// @title HTTP Request Line Structure
-/// @notice Represents the first line of an HTTP request
-/// @dev Contains protocol version, resource path, and method
-struct RequestLine {
-    /// @notice Protocol version (e.g., "WTTP/3.0")
-    string protocol;
-    /// @notice Resource path being requested
+
+/// @notice The URI and Query structs are intended for future use
+
+/// @title Query Structure
+/// @notice Represents a key-value pair in a URI query string
+/// @dev Used for parsing and processing query parameters
+struct Query {
+    /// @notice The key part of the query parameter
+    string key;
+    /// @notice The value part of the query parameter
+    string value;
+}
+/// @title URI Structure
+/// @notice Represents a Uniform Resource Identifier
+/// @dev Used for parsing and processing URIs
+struct URI {
+    /// @notice The path part of the URI
     string path;
-    /// @notice WTTP method (e.g., GET, HEAD, PUT)
-    Method method;
+    /// @notice The query parameters of the URI
+    Query[] query;
+    /// @notice The fragment part of the URI
+    string fragment;
 }
 
-/// @title HTTP Response Line Structure
-/// @notice Represents the first line of an HTTP response
-/// @dev Contains protocol version and status code
-struct ResponseLine {
-    /// @notice Protocol version (e.g., "WTTP/3.0")
-    string protocol;
-    /// @notice HTTP status code (e.g., 200, 404)
-    uint16 code;
-}
-
-// OPTIONSRequest is the same as RequestLine
+// OPTIONSRequest is just a path string
 
 /// @title OPTIONS Response Structure
 /// @notice Contains response data for OPTIONS requests
 /// @dev Includes bitmask of allowed methods
 struct OPTIONSResponse {
-    /// @notice Response status line
-    ResponseLine responseLine;
+    /// @notice Response status code
+    uint16 status;
     /// @notice Bitmask of allowed methods
     uint16 allow;
 }
@@ -258,8 +315,8 @@ struct OPTIONSResponse {
 /// @notice Contains request data for HEAD requests
 /// @dev Includes conditional request headers
 struct HEADRequest {
-    /// @notice Basic request information
-    RequestLine requestLine;
+    /// @notice Resource path to request
+    string path;
     /// @notice Conditional timestamp for If-Modified-Since header
     uint256 ifModifiedSince;
     /// @notice Conditional ETag for If-None-Match header
@@ -270,8 +327,8 @@ struct HEADRequest {
 /// @notice Contains metadata and header information for HEAD requests
 /// @dev Used as base response type for other methods
 struct HEADResponse {
-    /// @notice Response status line
-    ResponseLine responseLine;
+    /// @notice Response status code
+    uint16 status;
     /// @notice Resource header information
     HeaderInfo headerInfo;
     /// @notice Resource metadata
@@ -296,14 +353,8 @@ struct LOCATEResponse {
 struct PUTRequest {
     /// @notice Basic request information
     HEADRequest head;
-    /// @notice MIME type of the resource
-    bytes2 mimeType;
-    /// @notice Character set of the resource
-    bytes2 charset;
-    /// @notice Content encoding of the resource
-    bytes2 encoding;
-    /// @notice Language of the resource
-    bytes2 language;
+    /// @notice Properties of the resource
+    ResourceProperties properties;
     /// @notice Content chunks to store
     DataRegistration[] data;
 }
@@ -340,23 +391,6 @@ struct DEFINEResponse {
     HEADResponse head;
     /// @notice New header address
     bytes32 headerAddress;
-}
-
-// WTTP Version Constant
-// Keccak256 hash of the current protocol version
-// Used for version compatibility checks
-bytes32 constant WTTP_VERSION = keccak256(abi.encode("WTTP/3.0"));
-
-// WTTP Version Checker
-// Checks if a provided version string is compatible
-// Compares hashed version against the WTTP_VERSION constant
-// _wttpVersion Protocol version string to check
-// bool True if version is compatible
-function _compatibleWTTPVersion(string memory _wttpVersion) pure returns (bool) {
-    if(keccak256(abi.encode(_wttpVersion)) != WTTP_VERSION) {
-        return false;
-    }
-    return true;
 }
 
 // ETag Calculator

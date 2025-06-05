@@ -28,11 +28,11 @@ interface IWTTPGateway {
     
     /// @notice Forwards OPTIONS requests to a specified site
     /// @param _site Address of the target WTTP site contract
-    /// @param _optionsRequest The OPTIONS request parameters
+    /// @param _path Resource path to check
     /// @return _optionsResponse The response from the site
     function OPTIONS(
         address _site, 
-        RequestLine memory _optionsRequest
+        string memory _path
     ) external view returns (OPTIONSResponse memory _optionsResponse);
 
     /// @notice Handles GET requests with byte range support

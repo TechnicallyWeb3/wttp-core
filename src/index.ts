@@ -18,6 +18,46 @@
 
 // Export all TypeChain types and factories
 export * from '../typechain-types';
+// Export all interfaces
+export * from '../typechain-types/contracts/interfaces';
+// Export all interfaces IOs
+export {
+  IWTTPPermissionsInterface,
+  ResourceRoleCreatedEvent,
+  SiteAdminChangedEvent,
+} from '../typechain-types/contracts/interfaces/IWTTPPermissions';
+export {
+  IWTTPStorageInterface,
+  CacheControlStruct,
+  CacheControlStructOutput,
+  RedirectStruct,
+  RedirectStructOutput,
+  HeaderInfoStruct,
+  HeaderInfoStructOutput
+} from '../typechain-types/contracts/interfaces/IWTTPStorage';
+export {
+  IWTTPSiteInterface,
+  HEADRequestStruct,
+  HEADRequestStructOutput,
+  HEADResponseStruct,
+  HEADResponseStructOutput,
+  LOCATEResponseStruct,
+  LOCATEResponseStructOutput,
+  OPTIONSResponseStruct,
+  OPTIONSResponseStructOutput
+} from '../typechain-types/contracts/interfaces/IWTTPSite';
+export {
+  IWTTPGatewayInterface,
+  RangeStruct,
+  RangeStructOutput,
+  GETRequestStruct,
+  GETRequestStructOutput,
+  GETResponseStruct,
+  GETResponseStructOutput,
+  LOCATERequestStruct,
+  LOCATERequestStructOutput,
+} from '../typechain-types/contracts/interfaces/IWTTPGateway';
+
 
 // Export contract artifacts for direct access using require to avoid TS issues
 export const IWTTPSiteArtifact = require('../artifacts/contracts/interfaces/IWTTPSite.sol/IWTTPSite.json');

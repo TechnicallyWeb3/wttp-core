@@ -1,6 +1,6 @@
 {
-  "name": "@tw3/wttp-core",
-  "version": "0.0.1",
+  "name": "@wttp/core",
+  "version": "0.1.0",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -15,10 +15,12 @@
       "import": "./dist/esm/typechain-types/index.js",
       "require": "./dist/cjs/typechain-types/index.js",
       "types": "./dist/types/typechain-types/index.d.ts"
-    }
+    },
+    "./contracts/*": "./contracts/*"
   },
   "files": [
     "dist/",
+    "contracts/",
     "README.md",
     "LICENSE",
     "LLM_CONTEXT.md",
@@ -33,8 +35,8 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir dist/cjs",
     "build:esm": "tsc --project tsconfig.build.json --module esnext --outDir dist/esm",
     "clean": "rimraf dist artifacts cache typechain-types",
-    "compile": "hardhat compile",
-    "typechain": "hardhat typechain",
+    "compile": "npx hardhat compile",
+    "typechain": "npx hardhat typechain",
     "test": "npx hardhat test",
     "prepublishOnly": "npm run test && npm run build",
     "publish:all": "ts-node scripts/publish-packages.ts",

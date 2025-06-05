@@ -23,10 +23,10 @@ import "./WTTPTypes.sol";
 
 /// @title Interface for WTTP Storage Contract
 /// @notice Defines the external methods available on WTTPStorage
-/// @dev Provides storage and access control for web resources
+/// @dev Provides storage and access control for web resources, includes all inherited functions from WTTPPermissions
 interface IWTTPStorage {
 
-    // ============ Functions ============
+    // ============ WTTPStorage Functions ============
 
     /// @notice Returns the Data Point Storage contract instance
     /// @return IDataPointStorage The Data Point Storage contract
@@ -40,85 +40,52 @@ interface IWTTPStorage {
     /// @param _dpr New address for the Data Point Registry contract
     function setDPR(address _dpr) external;
 
-    /// @notice Creates a new header in storage
-    /// @param _header The header information to store
-    /// @return headerAddress The unique identifier for the stored header
-    function createHeader(
-        HeaderInfo memory _header
-    ) external returns (bytes32 headerAddress);
-
-    /// @notice Retrieves header information by its address
-    /// @param _headerAddress The unique identifier of the header
-    /// @return HeaderInfo The header information
-    function readHeader(
-        bytes32 _headerAddress
-    ) external view returns (HeaderInfo memory);
-
     /// @notice Sets the default header information
     /// @param _header The header information to use as default
-    function setDefaultHeader(
-        HeaderInfo memory _header
-    ) external;
+    function setDefaultHeader(HeaderInfo memory _header) external;
 
-    /// @notice Retrieves metadata for a resource path
-    /// @param _path Path of the resource
-    /// @return _metadata Metadata information for the resource
-    function readMetadata(
-        string memory _path
-    ) external view returns (ResourceMetadata memory _metadata);
+    // ============ Inherited from WTTPPermissions ============
 
-    /// @notice Updates metadata for a resource
-    /// @param _path Path of the resource to update
-    /// @param _metadata New metadata to store
-    function updateMetadata(
-        string memory _path, 
-        ResourceMetadata memory _metadata
-    ) external;
+    /// @notice Check if an account has a specific role
+    /// @param role The role identifier to check
+    /// @param account The address to check for the role
+    /// @return bool True if the account has the role or is a DEFAULT_ADMIN_ROLE holder
+    function hasRole(bytes32 role, address account) external view returns (bool);
 
-    /// @notice Deletes metadata for a resource
-    /// @param _path Path of the resource to delete
-    function deleteMetadata(
-        string memory _path
-    ) external;
+    /// @notice Creates a new resource-specific admin role
+    /// @param _role The new role identifier to create
+    function createResourceRole(bytes32 _role) external;
 
-    /// @notice Creates a new data point for a resource
-    /// @param _path Path where the resource will be stored
-    /// @param _dataRegistration Registration data including content and publisher
-    /// @return _dataPointAddress The address of the newly created data point
-    function createResource(
-        string memory _path,
-        DataRegistration memory _dataRegistration
-    ) external payable returns (bytes32 _dataPointAddress);
+    /// @notice Changes the SITE_ADMIN_ROLE identifier
+    /// @param _newSiteAdmin The new role identifier to use for site administrators
+    function changeSiteAdmin(bytes32 _newSiteAdmin) external;
 
-    /// @notice Retrieves all data point addresses for a resource
-    /// @param _path Path of the resource
-    /// @return Array of data point addresses comprising the resource
-    function readResource(
-        string memory _path
-    ) external view returns (bytes32[] memory);
+    /// @notice Grants a role to an account
+    /// @param role The role to grant
+    /// @param account The account to grant the role to
+    function grantRole(bytes32 role, address account) external;
 
-    /// @notice Updates a specific chunk of a resource
-    /// @param _path Path of the resource
-    /// @param _dataPointAddress Address of the data point chunk
-    /// @param _chunkIndex Index position of the chunk in the resource array
-    function updateResource(
-        string memory _path,
-        bytes32 _dataPointAddress,
-        uint256 _chunkIndex
-    ) external;
+    /// @notice Revokes a role from an account
+    /// @param role The role to revoke
+    /// @param account The account to revoke the role from
+    function revokeRole(bytes32 role, address account) external;
 
-    /// @notice Removes a resource and its metadata
-    /// @param _path Path of the resource to delete
-    function deleteResource(
-        string memory _path
-    ) external;
+    /// @notice Renounces a role for the calling account
+    /// @param role The role to renounce
+    /// @param callerConfirmation The account that is renouncing the role (must be msg.sender)
+    function renounceRole(bytes32 role, address callerConfirmation) external;
 
-    /// @notice Bulk upload of data points for a resource
-    /// @param _path Path of the resource
-    /// @param _dataRegistration Array of registration data for multiple chunks
-    /// @return _dataPointAddresses Array of addresses for the created data points
-    function uploadResource(
-        string memory _path,
-        DataRegistration[] memory _dataRegistration
-    ) external payable returns (bytes32[] memory _dataPointAddresses);
+    /// @notice Gets the admin role that controls a role
+    /// @param role The role to query
+    /// @return The admin role
+    function getRoleAdmin(bytes32 role) external view returns (bytes32);
+
+    /// @notice Returns the default admin role
+    /// @return The default admin role identifier
+    function DEFAULT_ADMIN_ROLE() external view returns (bytes32);
+
+    /// @notice Blacklists an account from all roles
+    /// @param _account The address to blacklist
+    function revokeAllRoles(address _account) external;
+
 } 
