@@ -60,17 +60,16 @@ export {
 
 
 // Export contract artifacts for direct access using require to avoid TS issues
-export const IWTTPSiteArtifact = require('../artifacts/contracts/interfaces/IWTTPSite.sol/IWTTPSite.json');
-export const IWTTPGatewayArtifact = require('../artifacts/contracts/interfaces/IWTTPGateway.sol/IWTTPGateway.json');
-export const IWTTPStorageArtifact = require('../artifacts/contracts/interfaces/IWTTPStorage.sol/IWTTPStorage.json');
-export const IWTTPPermissionsArtifact = require('../artifacts/contracts/interfaces/IWTTPPermissions.sol/IWTTPPermissions.json');
-export const WTTPTypesArtifact = require('../artifacts/contracts/interfaces/WTTPTypes.sol/WTTPTypes.json');
-
+// Auto-generated artifacts exports
+import { default as IWTTPPermissionsArtifact } from '../artifacts/contracts/interfaces/IWTTPPermissions.sol/IWTTPPermissions.json';
+import { default as IWTTPGatewayArtifact } from '../artifacts/contracts/interfaces/IWTTPGateway.sol/IWTTPGateway.json';
+import { default as IWTTPSiteArtifact } from '../artifacts/contracts/interfaces/IWTTPSite.sol/IWTTPSite.json';
+import { default as IWTTPStorageArtifact } from '../artifacts/contracts/interfaces/IWTTPStorage.sol/IWTTPStorage.json';
+export { IWTTPPermissionsArtifact, IWTTPGatewayArtifact, IWTTPSiteArtifact, IWTTPStorageArtifact };
 // Also export as a single artifacts object for convenience
 export const artifacts = {
   IWTTPSite: IWTTPSiteArtifact,
   IWTTPGateway: IWTTPGatewayArtifact,
   IWTTPStorage: IWTTPStorageArtifact,
-  IWTTPPermissions: IWTTPPermissionsArtifact,
-  WTTPTypes: WTTPTypesArtifact
+  IWTTPPermissions: IWTTPPermissionsArtifact
 }; 

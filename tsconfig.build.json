@@ -21,6 +21,7 @@
   "include": [
     "src/**/*",
     "typechain-types/**/*",
+    "artifacts/**/*",
     "*.ts",
     "!**/*.test.ts",
     "!**/*.spec.ts",

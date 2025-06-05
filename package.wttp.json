@@ -1,6 +1,6 @@
 {
   "name": "@wttp/core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -15,6 +15,11 @@
       "import": "./dist/esm/typechain-types/index.js",
       "require": "./dist/cjs/typechain-types/index.js",
       "types": "./dist/types/typechain-types/index.d.ts"
+    },
+    "./artifacts": {
+      "import": "./dist/esm/artifacts/index.js",
+      "require": "./dist/cjs/artifacts/index.js",
+      "types": "./dist/types/artifacts/index.d.ts"
     },
     "./contracts/*": "./contracts/*"
   },
