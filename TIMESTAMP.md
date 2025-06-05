@@ -1,6 +1,6 @@
 # WTTP Core - Publication Timestamp
 
-**Original Publication Date**: January 2025  
+**Original Publication Date**: June 2025  
 **Copyright**: TechnicallyWeb3  
 **License**: AGPL-3.0  
 

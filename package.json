@@ -72,7 +72,9 @@
     "hardhat": "^2.24.1",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3",
-    "@tw3/esp": "^0.4.2"
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "@tw3/esp": "^0.5.1"
   }
 }

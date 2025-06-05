@@ -1,5 +1,6 @@
 # WTTP Core
 
+**Version:** 0.1.0  
 Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).
 
 ## Overview
@@ -16,10 +17,10 @@ WTTP Core provides the foundational contracts and type definitions used across t
 ## Installation
 
 ```bash
-# Install standalone package
+# Install from npm
 npm install wttp-core
 
-# Or install organizational package
+# Or install the organizational scoped package
 npm install @tw3/wttp-core
 ```
 
@@ -112,9 +113,10 @@ async function querySiteContent(siteAddress: string, path: string) {
 
 ## Related Packages
 
-- `wttp-sites` - WTTP Site contract implementations
-- `wttp-gateway` - WTTP Gateway contract implementations  
-- `wttp-client` - Client libraries for WTTP interaction
+- `@tw3/wttp-sites` - WTTP Site contract implementations
+- `@tw3/wttp-gateway` - WTTP Gateway contract implementations  
+- `@tw3/wttp-client` - Client libraries for WTTP interaction
+- `@tw3/esp` - External Service Provider framework (dependency)
 
 ## License
 

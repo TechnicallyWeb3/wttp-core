@@ -1,6 +1,6 @@
 # WTTP Core - LLM Context Guide
 
-**Version:** 3.0.0  
+**Version:** 0.1.0  
 **Package:** `wttp-core` or `@tw3/wttp-core`  
 **License:** AGPL-3.0
 
