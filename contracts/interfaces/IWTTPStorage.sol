@@ -19,7 +19,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity ^0.8.20;
 
-import "./WTTPTypes.sol";
+import "../types/WTTPTypes.sol";
 
 /// @title Interface for WTTP Storage Contract
 /// @notice Defines the external methods available on WTTPStorage
