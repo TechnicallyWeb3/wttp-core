@@ -77,27 +77,37 @@ event ResourceDeleted(string path);
 error InvalidHeader(HeaderInfo header);
 /// @notice Error thrown when attempting to modify an immutable resource
 /// @param path Path of the immutable resource
-
 /// @dev WTTP revert status codes are prefixed with _ so handler can parse the error codes
 
+/// @notice Error thrown when a request is malformed
+/// @param reason Reason for the error
+/// @param body Body of the error, additional custom context
+error _400(string reason, string body);
+
 /// @notice Error thrown when an account lacks permission for a role
-/// @param account Address that attempted the action
+/// @param reason Reason for the error
 /// @param role Required role for the action
-/// @param path Path of the resource
-error _403(address account, bytes32 role, string path);
+error _403(string reason, bytes32 role);
 /// @notice Error thrown when a resource does not exist
-/// @param path Path of the resource
-error _404(string path);
+/// @param reason Reason for the error
+/// @param isImmutable Whether the resource is immutable
+error _404(string reason, bool isImmutable);
 /// @notice Error thrown when a method is not allowed for a resource
-/// @param method Method that was attempted
-/// @param path Path of the resource
-error _405(address account, Method method, string path);
+/// @param reason Reason for the error
+/// @param methodsAllowed Bitmask of allowed methods
+/// @param isImmutable Whether the resource is immutable
+error _405(string reason, uint16 methodsAllowed, bool isImmutable);
 /// @notice Error thrown when attempting to modify an immutable resource
-/// @param path Path of the immutable resource
-error _409(string path);
+/// @param reason Reason for the error
+/// @param body Body of the error, additional custom context
+error _409(string reason, string body);
 /// @notice Error thrown when a resource has been permanently deleted
-/// @param path Path of the deleted resource
-error _410(string path);
+/// @param reason Reason for the error
+error _410(string reason);
+/// @notice Error thrown when a range is out of bounds
+/// @param range The range that was out of bounds
+/// @param outOfBounds The index that was out of bounds
+error _416(string reason, Range range, int256 outOfBounds);
 
 // ============ Enum Definitions ============
 
@@ -450,3 +460,97 @@ struct GETResponse {
 }
 
 // ============ Constants ============
+
+// ============ Functions ============
+function maxMethods_() pure returns (uint16) {
+    return uint16(type(Method).max) + 1;
+}
+
+/// @notice Normalizes an int256 range to be within the total length and positive
+/// automatically normalizes 0,0 to 0,totalLength
+/// @param range The range to normalize
+/// @param totalLength The total length of the resource
+/// @return The normalized range
+function normalizeRange_(
+    Range memory range, 
+    uint256 totalLength
+) pure returns (Range memory) {
+
+    // if range is -1, 0 treat as 0,0, since 0, 0 is treated as full range
+    if (range.start == -1 && range.end == 0) {
+        range.start = 0;
+        range.end = 0;
+    }
+
+    // if the range is 0,0, set the end to the last index for full range
+    if (range.end == 0 && range.start == 0) {
+        range.end = int256(totalLength) - 1;
+        return range;
+    }
+
+    // start range is negative, reference from the end of the range
+    if (range.start < 0) {
+        // if (uint256(-range.start) >= totalLength) {
+        //     revert _416("Out of Bounds", range, range.start);
+        // }
+        range.start = int256(totalLength) - 1 + range.start;
+    }
+    // start should now be positive if the range wasn't out of bounds
+
+    // if the start or end is greater than the total length -1, range is out of bounds
+    // if (range.start >= int256(totalLength) || range.end >= int256(totalLength)) {
+    //     revert _416("Out of Bounds", range, int256(totalLength));
+    // }
+
+    // end range is negative, reference from the end of the range
+    if (range.end < 0) {
+        // if (uint256(-range.end) > totalLength - uint256(range.start)) {
+        //     revert _416("Out of Bounds", range, range.end);
+        // }
+        range.end = int256(totalLength) - 1 + range.end;
+    }
+    // end should now be positive if the range wasn't out of bounds
+
+    // if the start is greater than the end, the range is out of bounds
+    // if (range.start > range.end) {
+    //     revert _416("Out of Bounds", range, range.start);
+    // }
+
+    if (range.start > range.end || range.start < 0 || range.end > int256(totalLength)) {
+        revert _416("Out of Bounds", range, range.start);
+    }
+
+    // lighter code vs early exit was chosen for now
+
+    return range;
+} 
+
+function contentCode_(uint256 resourceSize, uint256 requestedSize) pure returns (uint16) {
+    if (requestedSize == 0) {
+        return 204;
+    }
+    if (requestedSize == resourceSize) {
+        return 200;
+    }
+    return 206;
+}
+
+/// @notice Emitted when a DEFINE request is successful
+/// @param account The account or contract that made the request
+/// @param response The response data
+event DEFINESuccess(address indexed account, DEFINEResponse response);
+
+/// @notice Emitted when a PUT request is successful
+/// @param account The account or contract that made the request
+/// @param response The response data
+event PUTSuccess(address indexed account, LOCATEResponse response);
+
+/// @notice Emitted when a PATCH request is successful
+/// @param account The account or contract that made the request
+/// @param response The response data
+event PATCHSuccess(address indexed account, LOCATEResponse response);
+
+/// @notice Emitted when a DELETE request is successful
+/// @param account The account or contract that made the request
+/// @param response The response data
+event DELETESuccess(address indexed account, HEADResponse response);

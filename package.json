@@ -1,6 +1,6 @@
 {
   "name": "wttp-core",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -20,6 +20,11 @@
       "import": "./dist/esm/artifacts/index.js",
       "require": "./dist/cjs/artifacts/index.js",
       "types": "./dist/types/artifacts/index.d.ts"
+    },
+    "./constants": {
+      "import": "./dist/esm/src/constants.js",
+      "require": "./dist/cjs/src/constants.js",
+      "types": "./dist/types/src/constants.d.ts"
     },
     "./contracts/*": "./contracts/*"
   },
@@ -75,11 +80,12 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.24.1",
+    "hardhat-build": "^0.1.2",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
-    "@tw3/esp": "^0.5.4"
+    "@tw3/esp": "^0.5.5"
   }
 }
