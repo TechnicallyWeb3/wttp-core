@@ -11,6 +11,7 @@ node_modules
 
 # TypeScript build output
 /dist
+contracts/interfaces
 
 # solidity-coverage files
 /coverage
