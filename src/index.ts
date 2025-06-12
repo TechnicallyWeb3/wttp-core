@@ -22,57 +22,27 @@ export * from '../typechain-types';
 export * from '../typechain-types/contracts/interfaces';
 // Export all interfaces IOs
 export {
-  IWTTPPermissionsInterface,
-  ResourceRoleCreatedEvent,
-  SiteAdminChangedEvent,
-} from '../typechain-types/contracts/interfaces/IWTTPPermissions';
+  IBaseWTTPPermissionsInterface,
+} from '../typechain-types/contracts/interfaces/IBaseWTTPPermissions';
 export {
-  IWTTPStorageInterface,
-  CacheControlStruct,
-  CacheControlStructOutput,
-  RedirectStruct,
-  RedirectStructOutput,
-  HeaderInfoStruct,
-  HeaderInfoStructOutput
-} from '../typechain-types/contracts/interfaces/IWTTPStorage';
+  IBaseWTTPStorageInterface,
+} from '../typechain-types/contracts/interfaces/IBaseWTTPStorage';
 export {
-  IWTTPSiteInterface,
-  HEADRequestStruct,
-  HEADRequestStructOutput,
-  HEADResponseStruct,
-  HEADResponseStructOutput,
-  LOCATEResponseStruct,
-  LOCATEResponseStructOutput,
-  OPTIONSResponseStruct,
-  OPTIONSResponseStructOutput
-} from '../typechain-types/contracts/interfaces/IWTTPSite';
-export {
-  IWTTPGatewayInterface,
-  RangeStruct,
-  RangeStructOutput,
-  GETRequestStruct,
-  GETRequestStructOutput,
-  GETResponseStruct,
-  GETResponseStructOutput,
-  LOCATERequestStruct,
-  LOCATERequestStructOutput,
-} from '../typechain-types/contracts/interfaces/IWTTPGateway';
+  IBaseWTTPSiteInterface,
+} from '../typechain-types/contracts/interfaces/IBaseWTTPSite';
 
-
-// Export contract artifacts for direct access using require to avoid TS issues
-// Auto-generated artifacts exports
-import { default as IWTTPPermissionsArtifact } from '../artifacts/contracts/interfaces/IWTTPPermissions.sol/IWTTPPermissions.json';
-import { default as IWTTPGatewayArtifact } from '../artifacts/contracts/interfaces/IWTTPGateway.sol/IWTTPGateway.json';
-import { default as IWTTPSiteArtifact } from '../artifacts/contracts/interfaces/IWTTPSite.sol/IWTTPSite.json';
-import { default as IWTTPStorageArtifact } from '../artifacts/contracts/interfaces/IWTTPStorage.sol/IWTTPStorage.json';
-export { IWTTPPermissionsArtifact, IWTTPGatewayArtifact, IWTTPSiteArtifact, IWTTPStorageArtifact };
-// Also export as a single artifacts object for convenience
-export const artifacts = {
-  IWTTPSite: IWTTPSiteArtifact,
-  IWTTPGateway: IWTTPGatewayArtifact,
-  IWTTPStorage: IWTTPStorageArtifact,
-  IWTTPPermissions: IWTTPPermissionsArtifact
-}; 
+export * from '../typechain-types/contracts/WTTP';
+// export {
+//   IWTTPGatewayInterface,
+//   RangeStruct,
+//   RangeStructOutput,
+//   GETRequestStruct,
+//   GETRequestStructOutput,
+//   GETResponseStruct,
+//   GETResponseStructOutput,
+//   LOCATERequestStruct,
+//   LOCATERequestStructOutput,
+// } from '../typechain-types/contracts/interfaces/IWTTPGateway';
 
 // ============ Constants and Utilities ============
 

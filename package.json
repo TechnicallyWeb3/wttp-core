@@ -1,6 +1,6 @@
 {
   "name": "wttp-core",
-  "version": "0.2.6",
+  "version": "0.2.9",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -45,7 +45,7 @@
     "build:cjs": "tsc --project tsconfig.build.json --module commonjs --outDir dist/cjs",
     "build:esm": "tsc --project tsconfig.build.json --module esnext --outDir dist/esm",
     "clean": "rimraf dist artifacts cache typechain-types",
-    "compile": "npx hardhat compile",
+    "compile": "npx hardhat build --force",
     "typechain": "npx hardhat typechain",
     "test": "npx hardhat test",
     "prepublishOnly": "npm run test && npm run build",
@@ -79,8 +79,9 @@
   "homepage": "https://github.com/TechnicallyWeb3/wttp-core#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@wttp/site": "^0.0.2",
     "hardhat": "^2.24.1",
-    "hardhat-build": "^0.1.2",
+    "hardhat-build": "^0.1.4",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

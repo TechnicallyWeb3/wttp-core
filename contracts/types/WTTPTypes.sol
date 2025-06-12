@@ -50,10 +50,12 @@ error InvalidRole(bytes32 role);
 // event MalformedParameter(string parameter, bytes value);
 // event HeaderExists(bytes32 headerAddress);
 // event ResourceExists(string path);
-/// @notice Emitted when a chunk index is out of bounds
-/// @param path Path of the resource
-/// @param chunkIndex Index that was out of bounds
-event OutOfBoundsChunk(string path, uint256 chunkIndex);
+/// @notice Emitted when a header is created
+/// @param headerAddress Address of the created header
+event HeaderCreated(bytes32 headerAddress);
+/// @notice Emitted when a header is updated
+/// @param headerAddress Address of the updated header
+event HeaderUpdated(bytes32 headerAddress);
 /// @notice Emitted when resource metadata is updated
 /// @param path Path of the updated resource
 event MetadataUpdated(string path);

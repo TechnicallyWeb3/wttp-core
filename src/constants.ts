@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import type { HeaderInfoStruct } from '../typechain-types/contracts/interfaces/IWTTPStorage';
+// import type { HeaderInfoStruct } from '../typechain-types/contracts/BaseWTTPStorage';
 
 // ============ Method Enum ============
 
@@ -246,7 +246,7 @@ export const ORIGINS_PRESETS = {
  * Fully public header - allows all methods for all users
  * Uses PUBLIC_ROLE for all method access
  */
-export const PUBLIC_HEADER: HeaderInfoStruct = {
+export const PUBLIC_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 2, // CachePreset.DEFAULT
@@ -268,7 +268,7 @@ export const PUBLIC_HEADER: HeaderInfoStruct = {
  * Admin-only header - restricts all methods to admin role
  * Only admins can access any methods
  */
-export const ADMIN_ONLY_HEADER: HeaderInfoStruct = {
+export const ADMIN_ONLY_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 0, // CachePreset.NONE
@@ -290,7 +290,7 @@ export const ADMIN_ONLY_HEADER: HeaderInfoStruct = {
  * Read-only public header - allows read operations for public, write operations for admins
  * Balanced access control for content sites
  */
-export const READ_ONLY_PUBLIC_HEADER: HeaderInfoStruct = {
+export const READ_ONLY_PUBLIC_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 3, // CachePreset.SHORT
@@ -312,7 +312,7 @@ export const READ_ONLY_PUBLIC_HEADER: HeaderInfoStruct = {
  * API header - designed for API endpoints with mixed access patterns
  * Read operations public, write operations restricted
  */
-export const API_HEADER: HeaderInfoStruct = {
+export const API_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 1, // CachePreset.NO_CACHE
@@ -334,7 +334,7 @@ export const API_HEADER: HeaderInfoStruct = {
  * Intra-site communication header - for internal service communication
  * Only allows intra-site role and admin access
  */
-export const INTRA_SITE_HEADER: HeaderInfoStruct = {
+export const INTRA_SITE_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 1, // CachePreset.NO_CACHE - don't cache internal communications
@@ -356,7 +356,7 @@ export const INTRA_SITE_HEADER: HeaderInfoStruct = {
  * Immutable public content header - for permanent, cacheable public content
  * Content that never changes and can be cached indefinitely
  */
-export const IMMUTABLE_PUBLIC_HEADER: HeaderInfoStruct = {
+export const IMMUTABLE_PUBLIC_HEADER = {
   cache: {
     immutableFlag: true,
     preset: 6, // CachePreset.PERMANENT
@@ -378,7 +378,7 @@ export const IMMUTABLE_PUBLIC_HEADER: HeaderInfoStruct = {
  * Read-only public header with limited methods - only allows read operations
  * Completely prevents write operations by not including them in methods bitmask
  */
-export const STRICT_READ_ONLY_HEADER: HeaderInfoStruct = {
+export const STRICT_READ_ONLY_HEADER = {
   cache: {
     immutableFlag: false,
     preset: 4, // CachePreset.MEDIUM
@@ -446,7 +446,7 @@ export function createCustomHeader(options: {
   redirectLocation?: string;
   customCache?: string;
   customCors?: string;
-}): HeaderInfoStruct {
+}) {
   const {
     methods = [Method.HEAD, Method.GET, Method.OPTIONS, Method.LOCATE],
     origins = ORIGINS_READ_PUBLIC_WRITE_ADMIN,
