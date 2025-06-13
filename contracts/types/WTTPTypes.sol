@@ -351,12 +351,17 @@ struct HEADResponse {
 
 /// @title LOCATE Response Structure
 /// @notice Extended response for LOCATE requests
+/// @param head The base HEAD response
+/// @param dataPoints The array of data point addresses for content chunks
+/// @param totalChunks The total number of chunks in the resource
 /// @dev Includes storage addresses and data point locations
 struct LOCATEResponse {
     /// @notice Base HEAD response
     HEADResponse head;
     /// @notice Array of data point addresses for content chunks
     bytes32[] dataPoints;
+
+    uint256 totalChunks;
 }
 
 /// @title PUT Request Structure
@@ -441,10 +446,12 @@ struct LOCATERequest {
 
 /// @title GET Request Structure
 /// @notice Extended request for GET with byte ranges
+/// @param locate The basic request information including path and conditional headers
+/// @param rangeBytes The range of bytes to retrieve
 /// @dev Allows requesting specific byte ranges of content
 struct GETRequest {
     /// @notice Basic request information
-    HEADRequest head;
+    LOCATERequest locate;
     /// @notice Range of bytes to retrieve
     Range rangeBytes;
 }
