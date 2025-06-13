@@ -46,6 +46,9 @@ error InvalidRole(bytes32 role);
 
 // ============ WTTP Storage Contract ============
 
+uint256 constant CHUNK_RESPONSE_LIMIT = 100000; // 100K chunks per response
+uint256 constant BYTE_RESPONSE_LIMIT = 1000000; // 1 MB per response
+
 // ============ Events ============
 // event MalformedParameter(string parameter, bytes value);
 // event HeaderExists(bytes32 headerAddress);
