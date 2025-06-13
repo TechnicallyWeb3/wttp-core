@@ -31,7 +31,7 @@ export {
   IBaseWTTPSiteInterface,
 } from '../typechain-types/contracts/interfaces/IBaseWTTPSite';
 
-export * from '../typechain-types/contracts/WTTP';
+export * from '../typechain-types/contracts/interfaces/IWTTP';
 // export {
 //   IWTTPGatewayInterface,
 //   RangeStruct,
