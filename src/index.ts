@@ -100,3 +100,6 @@ export {
   // Helper functions
   createCustomHeader
 } from './constants'; 
+
+export * from './helpers';
+export * from './mimeEncoding';
