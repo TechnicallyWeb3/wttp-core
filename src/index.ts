@@ -46,60 +46,7 @@ export * from '../typechain-types/contracts/interfaces/IWTTP';
 
 // ============ Constants and Utilities ============
 
-// Export all constants, enums, and utility functions
-export * from './constants';
-
 // Re-export specific items for convenience and backwards compatibility
-export {
-  // Method enum and utilities
-  Method,
-  getMethodCount,
-  methodsToBitmask,
-  bitmaskToMethods,
-  
-  // Method bitmasks
-  ALL_METHODS_BITMASK,
-  READ_ONLY_METHODS_BITMASK,
-  WRITE_METHODS_BITMASK,
-  
-  // Default roles
-  DEFAULT_ADMIN_ROLE,
-  BLACKLIST_ROLE,
-  PUBLIC_ROLE,
-  INTRA_SITE_ROLE,
-  
-  // Chain configuration
-  MASTER_CHAIN_ID,
-  
-  // Origins presets
-  ORIGINS_PRESETS,
-  ORIGINS_PUBLIC,
-  ORIGINS_ADMIN_ONLY,
-  ORIGINS_BLACKLISTED,
-  ORIGINS_INTRA_SITE,
-  ORIGINS_READ_PUBLIC_WRITE_ADMIN,
-  ORIGINS_READ_PUBLIC_WRITE_INTRA,
-  ORIGINS_READ_ONLY_PUBLIC,
-  ORIGINS_API_PATTERN,
-  ORIGINS_IMMUTABLE_CONTENT,
-  
-  // Default headers
-  DEFAULT_HEADERS,
-  DEFAULT_HEADER,
-  PUBLIC_HEADER,
-  ADMIN_ONLY_HEADER,
-  READ_ONLY_PUBLIC_HEADER,
-  API_HEADER,
-  INTRA_SITE_HEADER,
-  IMMUTABLE_PUBLIC_HEADER,
-  STRICT_READ_ONLY_HEADER,
-  
-  // Role collections
-  DEFAULT_ROLES,
-  
-  // Helper functions
-  createCustomHeader
-} from './constants'; 
-
+export * from './constants'; 
 export * from './helpers';
 export * from './mimeEncoding';

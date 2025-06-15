@@ -80,15 +80,25 @@ event ResourceDeleted(string path);
 /// @notice Error thrown when an invalid header is used
 /// @param header The header that was invalid
 error InvalidHeader(HeaderInfo header);
-/// @notice Error thrown when attempting to modify an immutable resource
-/// @param path Path of the immutable resource
-/// @dev WTTP revert status codes are prefixed with _ so handler can parse the error codes
+
+/// @title Resource Response Structure
+/// @notice Contains response data for resource requests
+/// @param dataPoints Array of data point addresses for content chunks
+/// @param totalChunks Total number of chunks in the resource
+/// @dev Includes data point addresses and total number of chunks
+struct ResourceResponse {
+    bytes32[] dataPoints;
+    uint256 totalChunks;
+}
 
 /// @notice Error thrown when a request is malformed
 /// @param reason Reason for the error
 /// @param body Body of the error, additional custom context
 error _400(string reason, string body);
-
+/// @notice Error thrown when a request doesn't have the required value
+/// @param reason Reason for the error
+/// @param requiredValue The required value to call the requested method, negative ints means shortfall, positive ints means total cost
+error _402(string reason, int256 requiredValue);
 /// @notice Error thrown when an account lacks permission for a role
 /// @param reason Reason for the error
 /// @param role Required role for the action
@@ -361,10 +371,8 @@ struct HEADResponse {
 struct LOCATEResponse {
     /// @notice Base HEAD response
     HEADResponse head;
-    /// @notice Array of data point addresses for content chunks
-    bytes32[] dataPoints;
-
-    uint256 totalChunks;
+    /// @notice Resource response
+    ResourceResponse resource;
 }
 
 /// @title PUT Request Structure
@@ -447,6 +455,21 @@ struct LOCATERequest {
     Range rangeChunks;
 }
 
+    struct DataPointSizes {
+        uint256[] sizes;
+        uint256 totalSize;
+    }
+
+    struct ProcessedData {
+        bytes data;
+        DataPointSizes sizes;
+    }
+
+    struct LOCATEResponseSecure {
+        LOCATEResponse locate;
+        DataPointSizes structure;
+    }
+
 /// @title GET Request Structure
 /// @notice Extended request for GET with byte ranges
 /// @param locate The basic request information including path and conditional headers
@@ -465,10 +488,8 @@ struct GETRequest {
 struct GETResponse {
     /// @notice Base HEAD response
     HEADResponse head;
-    /// @notice Actual byte range returned
-    Range bytesRange;
     /// @notice Content data
-    bytes data;
+    ProcessedData data;
 }
 
 // ============ Constants ============
@@ -487,52 +508,37 @@ function normalizeRange_(
     Range memory range, 
     uint256 totalLength
 ) pure returns (Range memory) {
+    int256 _length = int256(totalLength);
 
     // if range is -1, 0 treat as 0,0, since 0, 0 is treated as full range
     if (range.start == -1 && range.end == 0) {
         range.start = 0;
         range.end = 0;
+        return range;
     }
 
     // if the range is 0,0, set the end to the last index for full range
     if (range.end == 0 && range.start == 0) {
-        range.end = int256(totalLength) - 1;
+        range.end = _length - 1;
         return range;
     }
 
-    // start range is negative, reference from the end of the range
     if (range.start < 0) {
-        // if (uint256(-range.start) >= totalLength) {
-        //     revert _416("Out of Bounds", range, range.start);
-        // }
-        range.start = int256(totalLength) - 1 + range.start;
+        // start range is negative, reference from the end of the range
+        range.start = _length - 1 + range.start;
     }
     // start should now be positive if the range wasn't out of bounds
 
-    // if the start or end is greater than the total length -1, range is out of bounds
-    // if (range.start >= int256(totalLength) || range.end >= int256(totalLength)) {
-    //     revert _416("Out of Bounds", range, int256(totalLength));
-    // }
-
-    // end range is negative, reference from the end of the range
     if (range.end < 0) {
-        // if (uint256(-range.end) > totalLength - uint256(range.start)) {
-        //     revert _416("Out of Bounds", range, range.end);
-        // }
-        range.end = int256(totalLength) - 1 + range.end;
+        // end range is negative, reference from the end of the range
+        range.end = _length - 1 + range.end;
     }
     // end should now be positive if the range wasn't out of bounds
 
-    // if the start is greater than the end, the range is out of bounds
-    // if (range.start > range.end) {
-    //     revert _416("Out of Bounds", range, range.start);
-    // }
-
-    if (range.start > range.end || range.start < 0 || range.end > int256(totalLength)) {
-        revert _416("Out of Bounds", range, range.start);
+    if (range.start > range.end + 1 || range.start < 0 || range.end > _length) {
+        // +1 allows for a 0 length range: (5,4) would be valid but (6,4) is not
+        revert _416("Out of Bounds", range, _length);
     }
-
-    // lighter code vs early exit was chosen for now
 
     return range;
 } 
