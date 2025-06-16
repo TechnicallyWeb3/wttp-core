@@ -455,20 +455,20 @@ struct LOCATERequest {
     Range rangeChunks;
 }
 
-    struct DataPointSizes {
-        uint256[] sizes;
-        uint256 totalSize;
-    }
+struct DataPointSizes {
+    uint256[] sizes;
+    uint256 totalSize;
+}
 
-    struct ProcessedData {
-        bytes data;
-        DataPointSizes sizes;
-    }
+struct ProcessedData {
+    bytes data;
+    DataPointSizes sizes;
+}
 
-    struct LOCATEResponseSecure {
-        LOCATEResponse locate;
-        DataPointSizes structure;
-    }
+struct LOCATEResponseSecure {
+    LOCATEResponse locate;
+    DataPointSizes structure;
+}
 
 /// @title GET Request Structure
 /// @notice Extended request for GET with byte ranges
@@ -489,7 +489,7 @@ struct GETResponse {
     /// @notice Base HEAD response
     HEADResponse head;
     /// @notice Content data
-    ProcessedData data;
+    ProcessedData body;
 }
 
 // ============ Constants ============

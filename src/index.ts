@@ -30,7 +30,9 @@ export {
 export {
   IBaseWTTPSiteInterface,
 } from '../typechain-types/contracts/interfaces/IBaseWTTPSite';
-
+export {
+  IWTTPGatewayInterface,
+} from '../typechain-types/contracts/interfaces/IWTTPGateway';
 export * from '../typechain-types/contracts/interfaces/IWTTP';
 // export {
 //   IWTTPGatewayInterface,

@@ -115,6 +115,18 @@ export const PUBLIC_ROLE = "0xffffffffffffffffffffffffffffffffffffffffffffffffff
  */
 export const INTRA_SITE_ROLE = ethers.keccak256(ethers.toUtf8Bytes("INTRA_SITE_COMMUNICATION"));
 
+// ============ Role Collections ============
+
+/**
+ * Collection of all default roles for easy access
+ */
+export const DEFAULT_ROLES = {
+  ADMIN: DEFAULT_ADMIN_ROLE,
+  BLACKLIST: BLACKLIST_ROLE,
+  PUBLIC: PUBLIC_ROLE,
+  INTRA_SITE: INTRA_SITE_ROLE
+} as const;
+
 // ============ Chain Configuration ============
 
 /**
@@ -130,7 +142,7 @@ export const MASTER_CHAIN_ID = 11155111;
  * @param role The role to assign to all methods
  * @returns Origins array suitable for CORSPolicy
  */
-function createOriginsArray(role: string): string[] {
+export function createOriginsArray(role: string): string[] {
   return new Array(getMethodCount()).fill(role);
 }
 
@@ -140,7 +152,7 @@ function createOriginsArray(role: string): string[] {
  * @param writeRole Role for write operations (POST, PUT, PATCH, DELETE, DEFINE)
  * @returns Origins array with mixed access
  */
-function createMixedOriginsArray(readRole: string, writeRole: string): string[] {
+export function createMixedOriginsArray(readRole: string, writeRole: string): string[] {
   const origins = new Array(getMethodCount());
   origins[Method.HEAD] = readRole;
   origins[Method.GET] = readRole;
@@ -416,18 +428,6 @@ export const DEFAULT_HEADERS = {
  * Uses read-only public access pattern as a sensible default
  */
 export const DEFAULT_HEADER = READ_ONLY_PUBLIC_HEADER;
-
-// ============ Role Collections ============
-
-/**
- * Collection of all default roles for easy access
- */
-export const DEFAULT_ROLES = {
-  ADMIN: DEFAULT_ADMIN_ROLE,
-  BLACKLIST: BLACKLIST_ROLE,
-  PUBLIC: PUBLIC_ROLE,
-  INTRA_SITE: INTRA_SITE_ROLE
-} as const;
 
 // ============ Helper Functions ============
 
