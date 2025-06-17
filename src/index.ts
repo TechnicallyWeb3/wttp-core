@@ -50,5 +50,5 @@ export * from '../typechain-types/contracts/interfaces/IWTTP';
 
 // Re-export specific items for convenience and backwards compatibility
 export * from './constants'; 
-export * from './helpers';
-export * from './mimeEncoding';
+export * from './deployments';
+export * from './propertyEncoding';

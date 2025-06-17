@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 /// @custom:interface module "@wttp/gateway/contracts/WTTPGateway.sol" to "./interfaces/IWTTPGateway.sol" --import "./IBaseWTTPSite.sol"
 
 /// @custom:interface import "./IWTTPGateway.sol"
-/// @custom:interface is IWTTPGateway
+/// @custom:interface is IWTTPGateway, IBaseWTTPSite
 
 contract WTTP {
     // this contract file is used to build the interface only

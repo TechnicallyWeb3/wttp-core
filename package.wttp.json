@@ -1,6 +1,6 @@
 {
   "name": "@wttp/core",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -79,9 +79,10 @@
   "homepage": "https://github.com/TechnicallyWeb3/wttp-core#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@wttp/gateway": "^0.0.4",
     "@wttp/site": "^0.1.0",
     "hardhat": "^2.24.1",
-    "hardhat-build": "^0.1.4",
+    "hardhat-build": "^0.1.5",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

@@ -5,10 +5,11 @@
  */
 import { IWTTPGateway, IWTTPGateway__factory } from '../src';
 // import { WTTPGateway__factory } from '@wttp/gateway';
-import { Provider } from 'ethers';``
+import { ethers } from 'ethers';``
 import * as fs from 'fs';
 import * as path from 'path';
 import * as esp from '@tw3/esp';
+import { getRpcUrl } from './config';
 
 export { wttpDeployments, default } from '../wttp.deployments';
 
@@ -28,7 +29,7 @@ export interface LocalDeploymentData {
 let _modifiedDeployments: any = null;
 
 // Utility functions for working with deployments
-export function getContractAddress(chainId: number, contract: ContractTypes = 'gateway') {
+export function getContractAddress(chainId: number, contract: ContractTypes = 'gateway'): string | undefined {
   if (contract !== 'gateway') {
     return esp.getContractAddress(chainId, contract);
   }
@@ -57,12 +58,21 @@ export function isSupportedChain(chainId: number) {
   return getSupportedChainIds().includes(chainId);
 }
 
-export function loadContract(chainId: number, contract: 'gateway', provider: Provider | null = null) : IWTTPGateway {
-  const contractAddress = getContractAddress(chainId, contract);
-
-  if (!contractAddress) {
-    throw new Error(`Contract address not found for chainId: ${chainId} and contract: ${contract}`);
+export function loadContract(
+  chainId: number, 
+  contract: ContractTypes = 'gateway', 
+  provider: ethers.Provider | null = null
+) : IWTTPGateway | esp.DataPointStorage | esp.DataPointRegistry | undefined {
+  if (!isSupportedChain(chainId)) {
+    throw new Error(`Chain ${chainId} is not supported`);
   }
+
+  if (contract !== 'gateway') {
+    return esp.loadContract(chainId, contract, provider);
+  }
+
+  provider = provider || new ethers.JsonRpcProvider(getRpcUrl(chainId));
+  const contractAddress = getContractAddress(chainId, contract) as string;
 
   return IWTTPGateway__factory.connect(contractAddress, provider);
 }
