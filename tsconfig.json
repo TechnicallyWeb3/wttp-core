@@ -16,7 +16,11 @@
   },
   "include": [
     "src/**/*",
-    "typechain-types/**/*"
+    "typechain-types/**/*",
+    "scripts/**/*",
+    "wttp.config.ts",
+    "wttp.deployments.ts",
+    "hardhat.config.ts"
   ],
   "exclude": [
     "node_modules",

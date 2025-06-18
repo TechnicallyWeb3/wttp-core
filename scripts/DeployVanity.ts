@@ -13,11 +13,11 @@
  */
 
 import hre from "hardhat";
-import { formatEther, parseUnits } from "ethers";
+import { formatEther, formatUnits, parseUnits } from "ethers";
 import { addDeployment, formatDeploymentData } from './AddDeployment';
 
 /**
- * Deploy WTTP gateway contract with vanity addresses
+ * Deploy WTTP gateway contract with vanity addresses using try-catch funding strategy
  * @param hardhatRuntime - Hardhat runtime environment
  * @param skipVerification - Skip contract verification (optional, defaults to false)
  */
@@ -34,17 +34,19 @@ export async function deployWithVanity(
     throw new Error("ChainId is undefined, please set a chainId in your hardhat.config.ts");
   }
 
-  const shouldVerify = chainId !== 31337 && chainId !== 1337 && !skipVerification; // 31337 is localhost 1337 is hardhat
+  const shouldVerify = chainId !== 31337 && chainId !== 1337 && !skipVerification;
   
   console.log(`📡 Network: ${network} - ChainId: ${chainId}`);
   console.log(`🔍 Contract verification: ${shouldVerify ? "ENABLED" : "DISABLED (local network)"}\n`);
 
-  // Get signers - Gateway uses signer(0)
+  // Get signers - Gateway deployer is signer[1], owner is signer[0]
   const signers = await hardhatRuntime.ethers.getSigners();
-  const gatewaySigner = signers[0]; // Gateway deployer
+  const owner = signers[0]; // Owner/funding account
+  const gatewaySigner = signers[1]; // Gateway deployer
 
   console.log("📋 Deployment Configuration:");
-  console.log(`Gateway Deployer (signer 0): ${gatewaySigner.address}`);
+  console.log(`Owner/Funder (signer 0): ${owner.address}`);
+  console.log(`Gateway Deployer (signer 1): ${gatewaySigner.address}`);
 
   // Check nonces for vanity deployment validation
   const gatewayNonce = await hardhatRuntime.ethers.provider.getTransactionCount(gatewaySigner.address);
@@ -56,88 +58,149 @@ export async function deployWithVanity(
     throw new Error(`Vanity nonce error: Gateway deployer nonce is ${gatewayNonce}, expected 0. Gateway deployer has been used before.`);
   }
 
-  // Check balances
-  let gatewayBalance = await hardhatRuntime.ethers.provider.getBalance(gatewaySigner.address);
+  // Check initial balances
+  const initialOwnerBalance = await hardhatRuntime.ethers.provider.getBalance(owner.address);
+  const initialGatewayBalance = await hardhatRuntime.ethers.provider.getBalance(gatewaySigner.address);
 
-  console.log(`Gateway Deployer Balance: ${formatEther(gatewayBalance)} ETH\n`);
+  console.log(`Owner Balance: ${formatEther(initialOwnerBalance)} ETH`);
+  console.log(`Gateway Deployer Balance: ${formatEther(initialGatewayBalance)} ETH\n`);
 
-  // Get current gas price for calculations
-  const feeData = await hardhatRuntime.ethers.provider.getFeeData();
-  const gasPrice = feeData.gasPrice || parseUnits("20", "gwei"); // Fallback to 20 gwei
-  console.log(`Current gas price: ${formatEther(gasPrice * 1000000000n)} ETH/gas (${gasPrice.toString()} wei)\n`);
-
-  // Buffer for gas estimation (10% safety margin)
-  const bufferMultiplier = 110n; // 110% (10% buffer)
-  const divisor = 100n;
-
-  // Helper function to fund deployer if needed
-  async function fundDeployerIfNeeded(
-    deployerSigner: any,
-    deployerBalance: bigint,
-    requiredAmount: bigint,
-    deployerName: string
-  ): Promise<bigint> {
-    if (deployerBalance >= requiredAmount) {
-      console.log(`✅ ${deployerName} deployer has sufficient balance (${formatEther(deployerBalance)} ETH >= ${formatEther(requiredAmount)} ETH)`);
-      return deployerBalance;
-    }
-
-    console.log(`⚠️  ${deployerName} deployer has insufficient balance!`);
-    console.log(`   Required: ${formatEther(requiredAmount)} ETH`);
-    console.log(`   Available: ${formatEther(deployerBalance)} ETH`);
-    console.log(`   Shortfall: ${formatEther(requiredAmount - deployerBalance)} ETH`);
-
-    // Calculate funding needed with 15% buffer
-    const fundingBuffer = 115n; // 115% (15% buffer)
-    const fundingDivisor = 100n;
-    const fundingNeeded = (requiredAmount * fundingBuffer) / fundingDivisor;
+  /**
+   * Parse insufficient funds error and extract required amount
+   */
+  function parseInsufficientFundsError(error: any): bigint | null {
+    const errorMsg = error.message || error.toString();
+    console.log(`🔍 Parsing: ${errorMsg}`);
     
-    console.log(`💰 Checking if funding signer can fund ${deployerName} deployer...`);
-    console.log(`   Funding needed (with 15% buffer): ${formatEther(fundingNeeded)} ETH`);
+    // Explicit pattern matching for known formats
+    
+    // 1. Provider-specific format: "ProviderError: Sender doesn't have enough funds to send tx. The max upfront cost is: 17156179590000000 and the sender's balance is: 4265999968225256"
+    const providerPattern = /max upfront cost is: (\d+) and the sender's balance is: (\d+)/;
+    const providerMatch = errorMsg.match(providerPattern);
+    if (providerMatch) {
+      const maxUpfront = BigInt(providerMatch[1]);
+      const balance = BigInt(providerMatch[2]);
+      const needed = maxUpfront - balance;
+      console.log(`📊 Hardhat format - Max upfront: ${formatEther(maxUpfront)} ETH, Balance: ${formatEther(balance)} ETH, Needed: ${formatEther(needed)} ETH`);
+      return needed;
+    }
+    
+    // 2. Testnet format: "insufficient funds for gas * price + value: balance 0, tx cost 344209543464, overshot 344209543464"
+    const testnetPattern = /insufficient funds for gas \* price \+ value: balance (\d+), tx cost (\d+), overshot (\d+)/;
+    const testnetMatch = errorMsg.match(testnetPattern);
+    if (testnetMatch) {
+      const balance = BigInt(testnetMatch[1]);
+      const txCost = BigInt(testnetMatch[2]);
+      const overshot = BigInt(testnetMatch[3]);
+      console.log(`📊 Testnet format - Balance: ${formatEther(balance)} ETH, TX Cost: ${formatEther(txCost)} ETH, Overshot: ${formatEther(overshot)} ETH`);
+      return overshot; // The overshot amount is what we need
+    }
+    
+    // 3. Standard have/want format: "insufficient funds for gas * price + value: address 0x... have 12345 want 67890"
+    const standardPattern = /insufficient funds for gas \* price \+ value: address .* have (\d+) want (\d+)/;
+    const standardMatch = errorMsg.match(standardPattern);
+    if (standardMatch) {
+      const have = BigInt(standardMatch[1]);
+      const want = BigInt(standardMatch[2]);
+      const needed = want - have;
+      console.log(`📊 Standard format - Have: ${formatEther(have)} ETH, Want: ${formatEther(want)} ETH, Needed: ${formatEther(needed)} ETH`);
+      return needed;
+    }
+    
+    // Fallback: Generic patterns for other formats
+    console.log("🔄 No explicit pattern matched, trying fallback patterns...");
+    const fallbackPatterns = [
+      /insufficient funds: address .* have (\d+) want (\d+)/,
+      /insufficient funds for transfer: address .* have (\d+) want (\d+)/,
+      /insufficient funds.*?want (\d+)/,
+      /need (\d+) have (\d+)/
+    ];
 
-    // Use signers[1] as funding source if available, otherwise throw error
-    if (signers.length < 2) {
-      console.error(`❌ No funding signer available (need at least 2 signers)`);
-      throw new Error(`❌ ${deployerName} deployer has insufficient balance! Required: ${formatEther(requiredAmount)} ETH, Available: ${formatEther(deployerBalance)} ETH. No funding signer available.`);
+    for (const pattern of fallbackPatterns) {
+      const match = errorMsg.match(pattern);
+      if (match) {
+        console.log(`📊 Fallback pattern matched with ${match.length - 1} capture groups`);
+        if (match.length >= 3) {
+          // Two numbers: typically have, want
+          const have = BigInt(match[1]);
+          const want = BigInt(match[2]);
+          const needed = want - have;
+          console.log(`📊 Fallback - Have: ${formatEther(have)} ETH, Want: ${formatEther(want)} ETH, Needed: ${formatEther(needed)} ETH`);
+          return needed;
+        } else if (match.length >= 2) {
+          // One number: assume it's the needed amount
+          const needed = BigInt(match[1]);
+          console.log(`📊 Fallback - Needed: ${formatEther(needed)} ETH`);
+          return needed;
+        }
+      }
+    }
+    
+    console.log("❌ Could not parse required amount from error");
+    return null;
+  }
+
+  /**
+   * Fund deployer with parsed amount plus buffer
+   */
+  async function fundDeployer(deployerSigner: any, requiredAmount: bigint, deployerName: string): Promise<void> {
+    // Add 10% buffer for safety
+    const fundingAmount = (requiredAmount * 110n) / 100n;
+    
+    console.log(`💰 Funding ${deployerName} deployer with ${formatEther(fundingAmount)} ETH (10% buffer)...`);
+    
+    const ownerBalance = await hardhatRuntime.ethers.provider.getBalance(owner.address);
+    if (ownerBalance < fundingAmount) {
+      throw new Error(`Owner has insufficient funds: need ${formatEther(fundingAmount)} ETH but only have ${formatEther(ownerBalance)} ETH`);
     }
 
-    const fundingSigner = signers[1];
-    const fundingSignerBalance = await hardhatRuntime.ethers.provider.getBalance(fundingSigner.address);
-
-    // Estimate the gas cost for the funding transaction itself
-    const fundingGasEstimate = 21000n; // Standard ETH transfer gas
-    const fundingTxCost = fundingGasEstimate * gasPrice;
-    const totalFundingNeeded = fundingNeeded + fundingTxCost;
-
-    console.log(`   Funding transaction cost: ~${formatEther(fundingTxCost)} ETH`);
-    console.log(`   Total funding signer needs: ${formatEther(totalFundingNeeded)} ETH`);
-
-    if (fundingSignerBalance < totalFundingNeeded) {
-      console.error(`❌ Funding signer has insufficient funds to cover ${deployerName} deployment!`);
-      console.error(`   Funding signer balance: ${formatEther(fundingSignerBalance)} ETH`);
-      console.error(`   Total needed: ${formatEther(totalFundingNeeded)} ETH`);
-      console.error(`   Funding signer shortfall: ${formatEther(totalFundingNeeded - fundingSignerBalance)} ETH`);
-      throw new Error(`Insufficient funds for ${deployerName} deployment. Neither deployer nor funding signer has enough ETH.`);
-    }
-
-    console.log(`✅ Funding signer has sufficient funds to cover ${deployerName} deployment`);
-    console.log(`💸 Funding ${deployerName} deployer with ${formatEther(fundingNeeded)} ETH...`);
-
-    // Send funding from funding signer to deployer
-    const fundingTx = await fundingSigner.sendTransaction({
+    const fundingTx = await owner.sendTransaction({
       to: deployerSigner.address,
-      value: fundingNeeded,
-      gasLimit: fundingGasEstimate
+      value: fundingAmount
     });
 
     await fundingTx.wait();
     console.log(`✅ Successfully funded ${deployerName} deployer (tx: ${fundingTx.hash})`);
-
-    // Return updated balance
+    
     const newBalance = await hardhatRuntime.ethers.provider.getBalance(deployerSigner.address);
     console.log(`   New ${deployerName} deployer balance: ${formatEther(newBalance)} ETH\n`);
+  }
+
+  /**
+   * Deploy contract with automatic funding on failure
+   */
+  async function deployWithRetry<T>(
+    deployerSigner: any,
+    deployFunction: () => Promise<T>,
+    deployerName: string,
+    contractName: string
+  ): Promise<T> {
+    console.log(`🚀 Attempting to deploy ${contractName}...`);
     
-    return newBalance;
+    try {
+      // First attempt
+      return await deployFunction();
+    } catch (error: any) {
+      console.log(`⚠️  ${contractName} deployment failed, checking if it's a funding issue...`);
+      
+      const requiredAmount = parseInsufficientFundsError(error);
+      if (!requiredAmount) {
+        console.log("❌ Error is not related to insufficient funds, re-throwing...");
+        throw error;
+      }
+      
+      console.log(`💸 Funding ${deployerName} deployer and retrying deployment...`);
+      await fundDeployer(deployerSigner, requiredAmount, deployerName);
+      
+      try {
+        // Second attempt after funding
+        console.log(`🔄 Retrying ${contractName} deployment...`);
+        return await deployFunction();
+      } catch (retryError: any) {
+        console.log(`❌ ${contractName} deployment failed again after funding`);
+        throw retryError;
+      }
+    }
   }
 
   let gateway: any | undefined;
@@ -148,26 +211,20 @@ export async function deployWithVanity(
     // STEP 1: Gateway Deployment
     // ========================================
     console.log("📦 Step 1: WTTP Gateway Deployment");
-    console.log("⛽ Estimating Gateway deployment cost...");
     
     const GatewayFactory = await hardhatRuntime.ethers.getContractFactory("WTTPGateway");
-    const gatewayDeployTx = await GatewayFactory.connect(gatewaySigner).getDeployTransaction();
-    const gatewayGasEstimate = await hardhatRuntime.ethers.provider.estimateGas({
-      ...gatewayDeployTx,
-      from: gatewaySigner.address
-    });
     
-    const gatewayCost = (gatewayGasEstimate * gasPrice * bufferMultiplier) / divisor;
+    gateway = await deployWithRetry(
+      gatewaySigner,
+      async () => {
+        const contract = await GatewayFactory.connect(gatewaySigner).deploy();
+        await contract.waitForDeployment();
+        return contract;
+      },
+      "Gateway",
+      "WTTPGateway"
+    );
     
-    console.log(`💰 Gateway deployment cost (with 10% buffer): ~${formatEther(gatewayCost)} ETH (${gatewayGasEstimate.toString()} gas)`);
-    
-    // Check and fund gateway deployer if needed
-    gatewayBalance = await fundDeployerIfNeeded(gatewaySigner, gatewayBalance, gatewayCost, "Gateway");
-    
-    console.log("🚀 Deploying WTTP Gateway...");
-    
-    gateway = await GatewayFactory.connect(gatewaySigner).deploy();
-    await gateway.waitForDeployment();
     gatewayAddress = await gateway.getAddress();
 
     console.log(`✅ WTTP Gateway deployed to: ${gatewayAddress}`);
@@ -200,31 +257,14 @@ export async function deployWithVanity(
       console.log("⚠️  Basic functionality test skipped");
     }
 
-    // Contract verification
-    if (shouldVerify && !skipVerification) {
-      console.log("\n🔍 Starting contract verification...");
-      
-      try {
-        // Verify Gateway
-        console.log("📋 Verifying WTTP Gateway...");
-        await hardhatRuntime.run("deploy:verify", {
-          address: gatewayAddress,
-          constructorArguments: [],
-        });
-        console.log("✅ WTTP Gateway verified successfully!");
-      } catch (error: any) {
-        if (error.message.includes("Already Verified")) {
-          console.log("ℹ️  WTTP Gateway already verified");
-        } else {
-          console.log("❌ WTTP Gateway verification failed:", error.message);
-        }
-      }
-    }
+    // Contract verification is now handled by the task system with confirmation delays
 
     // Calculate actual costs spent (get final balances)
+    const finalOwnerBalance = await hardhatRuntime.ethers.provider.getBalance(owner.address);
     const finalGatewayBalance = await hardhatRuntime.ethers.provider.getBalance(gatewaySigner.address);
     
-    const actualGatewayCost = gatewayBalance - finalGatewayBalance;
+    const actualGatewayCost = initialGatewayBalance - finalGatewayBalance;
+    const ownerSpent = initialOwnerBalance - finalOwnerBalance;
 
     console.log("\n🎉 Deployment completed successfully!");
     console.log("\n📄 Deployment Summary:");
@@ -232,11 +272,13 @@ export async function deployWithVanity(
     console.log(`Network:          ${network}`);
     console.log(`WTTP Gateway:     ${gatewayAddress} (deployed)`);
     console.log(`Deployer:         ${gatewaySigner.address}`);
+    console.log(`Owner:            ${owner.address}`);
     console.log(`\nDeployment costs:`);
     console.log(`Gateway actual:   ${formatEther(actualGatewayCost)} ETH`);
     console.log(`Total spent:      ${formatEther(actualGatewayCost)} ETH`);
-    if (shouldVerify && !skipVerification) {
-      console.log(`Etherscan:        Contract verified on block explorer`);
+    if (ownerSpent > 0n) {
+      console.log(`Owner funding:    ${formatEther(ownerSpent)} ETH`);
+      console.log(`Grand total:      ${formatEther(actualGatewayCost + ownerSpent)} ETH`);
     }
     console.log("=".repeat(60));
 
@@ -270,14 +312,18 @@ export async function deployWithVanity(
       gateway,
       addresses: {
         gateway: gatewayAddress,
-        deployer: gatewaySigner.address
+        deployer: gatewaySigner.address,
+        owner: owner.address
       },
       signers: {
-        gatewaySigner
+        gatewaySigner,
+        owner
       },
       costs: {
         gateway: actualGatewayCost,
-        total: actualGatewayCost
+        total: actualGatewayCost,
+        ownerFunding: ownerSpent,
+        grandTotal: actualGatewayCost + ownerSpent
       }
     };
 

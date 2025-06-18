@@ -29,12 +29,12 @@
 
 export const wttpDeployments = {
   chains: {
-    5: {
+    11155111: {
       gateway: {
-        contractAddress: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-        deployerAddress: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-        txHash: '0xd66559ccb54a8875c0415c702c49b68f32d2a3f76909319ce87da373cb97bf92',
-        deployedAt: '2025-06-04T04:26:46.729Z'
+        contractAddress: '0x6A7E6a45573D9E51D53413B25399311B0df42687',
+        deployerAddress: '0x7916237cB4979d47c8eeb2EB96fCE4F1c43833F4',
+        txHash: '0x2835c2917fff88684d9a682e15af3d8c93052908d6873d831c67d23741ef0123',
+        deployedAt: '2025-06-18T05:24:48.000Z'
       }
     },
   }

@@ -1,3 +1,14 @@
+/**
+ * Copyright (C) 2025 TechnicallyWeb3
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+import wttpDeployments from './wttp.deployments';
+
 export interface WttpChainConfig {
     name?: string;
     alias?: string;
@@ -17,21 +28,12 @@ export interface WttpConfig {
 export const config: WttpConfig = {
     defaultChain: 11155111,
     chains: {
-        31337: {
-            name: 'Hardhat Localhost',
-            alias: 'localhost',
-            symbol: 'ETH',
-            gateway: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
-            rpcsList: [
-                "http://127.0.0.1:8545"
-            ],
-        },
         11155111: {
             name: 'Sepolia Testnet',
             alias: 'sepolia',
             symbol: 'ETH',
             explorer: 'https://sepolia.etherscan.io',
-            gateway: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+            gateway: wttpDeployments.chains[11155111].gateway.contractAddress,
             rpcsList: [
                 "https://ethereum-sepolia-rpc.publicnode.com",
                 "https://1rpc.io/sepolia",
@@ -44,7 +46,7 @@ export const config: WttpConfig = {
             alias: 'mainnet',
             symbol: 'ETH',
             explorer: 'https://etherscan.io',
-            gateway: '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512',
+            gateway: wttpDeployments.chains[11155111].gateway.contractAddress, // temporary until mainnet is deployed
             rpcsList: [
                 "https://ethereum-rpc.publicnode.com",
                 "https://eth.llamarpc.com",
