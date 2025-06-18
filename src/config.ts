@@ -8,3 +8,4 @@ export function getRpcUrl(chainId: number) {
     return chain.rpcsList[0];
 }
 
+export { config };

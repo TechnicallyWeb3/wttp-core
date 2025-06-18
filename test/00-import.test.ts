@@ -85,6 +85,8 @@ import {
     bytesToEncoding,
 } from '../src';
 
+import { config } from '../src';
+
 describe('Import Test', () => {
     it('should import all constants', () => {
         it('should import all functions', () => {

@@ -49,6 +49,7 @@ export * from '../typechain-types/contracts/interfaces/IWTTP';
 // ============ Constants and Utilities ============
 
 // Re-export specific items for convenience and backwards compatibility
+export * from './config';
 export * from './constants'; 
 export * from './deployments';
 export * from './propertyEncoding';

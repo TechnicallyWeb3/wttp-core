@@ -1,6 +1,6 @@
 {
   "name": "wttp-core",
-  "version": "0.4.5",
+  "version": "0.4.9",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
@@ -87,8 +87,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@tw3/esp": "^0.5.5",
-    "@types/mime-types": "^3.0.1"
+    "@types/mime-types": "^3.0.1",
+    "mime-types": "^3.0.1"
   }
 }
