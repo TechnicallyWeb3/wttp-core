@@ -311,7 +311,7 @@ export const READ_ONLY_PUBLIC_HEADER = {
   cors: {
     methods: ALL_METHODS_BITMASK,
     origins: ORIGINS_READ_PUBLIC_WRITE_ADMIN,
-    preset: 4, // CORSPreset.MIXED_ACCESS
+    preset: 1, // CORSPreset.PUBLIC
     custom: ""
   },
   redirect: {

@@ -43,10 +43,8 @@ import {
 import {
     IBaseWTTPPermissions,
     IBaseWTTPPermissions__factory,
-    IBaseWTTPPermissionsInterface,
     IBaseWTTPStorage,
     IBaseWTTPStorage__factory,
-    IBaseWTTPStorageInterface,
     IBaseWTTPSite,
     IBaseWTTPSite__factory,
     IBaseWTTPSiteInterface,
