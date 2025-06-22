@@ -147,11 +147,11 @@ export type Charset = keyof typeof charsetToBytes;
 export type CharsetBytes = keyof typeof bytesToCharset;
 
 export function encodeCharset(charset: string): string {
-    return charsetToBytes[charset as Charset] || '0x7508'; // Default to utf-8
+    return charsetToBytes[charset as Charset] || '0x0000'; // Default to none
 }
 
 export function decodeCharset(bytes: string): string {
-    return bytesToCharset[bytes as CharsetBytes] || 'utf-8'; // Default to utf-8
+    return bytesToCharset[bytes as CharsetBytes] || ''; // Default to none
 }
 
 export const encodingToBytes = {
