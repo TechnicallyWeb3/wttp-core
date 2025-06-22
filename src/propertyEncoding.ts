@@ -42,19 +42,20 @@ export const bytesToMimeTypes = {
     '0x666f': 'font/otf', // fo
     '0x6677': 'font/woff', // fw
     '0x6632': 'font/woff2', // f2
-    '0x6273': 'application/octet-stream' // bs (binary stream)
+    '0x6273': 'application/octet-stream', // bs (binary stream)
+    '0x0000': 'application/octet-stream' // bs (binary stream)
 }
 
 export type MimeType = keyof typeof mimeTypesToBytes;
 export type MimeBytes = keyof typeof bytesToMimeTypes;
 
-// Helper function to convert MIME type to bytes2
-export function encodeMimeType(mimeType: MimeType): MimeBytes {
-    return (mimeTypesToBytes[mimeType] || '0x6273') as MimeBytes; // Default to binary stream
+// Helper function to convert MIME type to bytes2e 
+export function encodeMimeType(mimeType: string): string {
+    return mimeTypesToBytes[mimeType as MimeType] || '0x6273'; // Default to binary stream
 }
 
-export function decodeMimeType(bytes: MimeBytes): MimeType {
-    return (bytesToMimeTypes[bytes] || 'application/octet-stream') as MimeType; // Default to binary stream
+export function decodeMimeType(bytes: string): string {
+    return bytesToMimeTypes[bytes as MimeBytes] || 'application/octet-stream'; // Default to binary stream
 }
 
 export const charsetToBytes = {
@@ -139,17 +140,18 @@ export const bytesToCharset = {
     '0x7739': 'windows-1257',
     '0x773a': 'windows-1258',
     '0x6205': 'big5',
+    '0x0000': ''
 }
 
 export type Charset = keyof typeof charsetToBytes;
 export type CharsetBytes = keyof typeof bytesToCharset;
 
-export function encodeCharset(charset: Charset): CharsetBytes {
-    return (charsetToBytes[charset] || '0x7508') as CharsetBytes; // Default to utf-8
+export function encodeCharset(charset: string): string {
+    return charsetToBytes[charset as Charset] || '0x7508'; // Default to utf-8
 }
 
-export function decodeCharset(bytes: CharsetBytes): Charset {
-    return (bytesToCharset[bytes] || 'utf-8') as Charset; // Default to utf-8
+export function decodeCharset(bytes: string): string {
+    return bytesToCharset[bytes as CharsetBytes] || 'utf-8'; // Default to utf-8
 }
 
 export const encodingToBytes = {
@@ -172,17 +174,18 @@ export const bytesToEncoding = {
     '0x6c34': 'lz4',
     '0x736e': 'snappy',
     '0x6c6d': 'lzma',
+    '0x0000': 'identity'
 }
 
 export type Encoding = keyof typeof encodingToBytes;
 export type EncodingBytes = keyof typeof bytesToEncoding;
 
-export function encodeEncoding(encoding: Encoding): EncodingBytes {
-    return (encodingToBytes[encoding] || '0x6964') as EncodingBytes; // Default to identity
+export function encodeEncoding(encoding: string): string {
+    return encodingToBytes[encoding as Encoding] || '0x6964'; // Default to identity
 }
 
-export function decodeEncoding(bytes: EncodingBytes): Encoding {
-    return (bytesToEncoding[bytes] || 'identity') as Encoding; // Default to identity
+export function decodeEncoding(bytes: string): string {
+    return bytesToEncoding[bytes as EncodingBytes] || 'identity'; // Default to identity
 }
 
 export const languageToBytes = {
@@ -205,17 +208,45 @@ export const bytesToLanguage = {
     '0x6a00': 'ja',
     '0x6b00': 'ko',
     '0x7200': 'ru',
+    '0x0000': ''
 }
 
 export type Language = keyof typeof languageToBytes;
 export type LanguageBytes = keyof typeof bytesToLanguage;
 
-export function encodeLanguage(language: Language): LanguageBytes {
-    return (languageToBytes[language]) as LanguageBytes;
+export const regionToBytes = {
+    'US': '0x0075', // u
+    'GB': '0x0067', // g
+    'CA': '0x0063', // c
+    'AU': '0x0061', // a
+    'NZ': '0x006e', // n
 }
 
-export function decodeLanguage(bytes: LanguageBytes): Language {
-    return (bytesToLanguage[bytes]) as Language;
+export const bytesToRegion = {
+    '0x0075': 'US',
+    '0x0067': 'GB',
+    '0x0063': 'CA',
+    '0x0061': 'AU',
+    '0x006e': 'NZ',
+    '0x0000': ''
+}
+
+export type Region = keyof typeof regionToBytes;
+export type RegionBytes = keyof typeof bytesToRegion;
+
+export function encodeLanguage(language: string): string {
+    const fullLanguage = language.split('-');
+    const languageCode = languageToBytes[fullLanguage[0] as Language] || '0x0000';
+    const regionCode = regionToBytes[fullLanguage[1] as Region] || '0x0000';
+    return (languageCode.slice(0, 3) + regionCode.slice(4)); // 0xXXYY XX is language code, YY is region code
+}
+
+export function decodeLanguage(bytes: string): string {
+    const languageCode = bytes.slice(0, 3) + "00";
+    const regionCode = "0x00" + bytes.slice(4);
+    const language = bytesToLanguage[languageCode as LanguageBytes] || '';
+    const region = bytesToRegion[regionCode as RegionBytes] || '';
+    return language ? language + (region ? '-' + region : '') : '';
 }
 
 export type MetadataProperty = 'mime' | 'charset' | 'encoding' | 'language';

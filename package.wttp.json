@@ -1,6 +1,6 @@
 {
   "name": "@wttp/core",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "description": "Core contracts, interfaces, and TypeScript types for the Web3 Transfer Protocol (WTTP).",
   "main": "./dist/cjs/src/index.js",
   "module": "./dist/esm/src/index.js",
