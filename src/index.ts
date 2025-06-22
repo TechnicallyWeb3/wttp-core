@@ -52,6 +52,7 @@ export * from '../typechain-types/contracts/interfaces/IWTTP';
 export * from './config';
 export * from './constants'; 
 export * from './deployments';
+export * from './presetDefinitions';
 export * from './propertyEncoding';
 
 // ============ Utils ============
