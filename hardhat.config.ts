@@ -14,6 +14,7 @@
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
 import "hardhat-build";
 import { ethers } from "ethers";
 import dotenv from "dotenv";
@@ -89,13 +90,18 @@ const config: HardhatUserConfig = {
     localhost: {
       chainId: 31337,
       url: "http://localhost:8545",
-      accounts: accounts,
+      accounts,
       blockGasLimit: 30000000,
     },
     sepolia: {
       chainId: 11155111,
       url: "https://ethereum-sepolia-rpc.publicnode.com",
-      accounts: accounts,
+      accounts
+    },
+    polygon: {
+      chainId: 137,
+      url: "https://polygon-bor-rpc.publicnode.com",
+      accounts
     },
   },
   etherscan: {

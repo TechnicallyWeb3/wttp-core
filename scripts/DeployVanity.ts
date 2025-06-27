@@ -15,6 +15,7 @@
 import hre from "hardhat";
 import { formatEther, formatUnits, parseUnits } from "ethers";
 import { addDeployment, formatDeploymentData } from './AddDeployment';
+import { WTTPGateway__factory } from "@wttp/gateway";
 
 /**
  * Deploy WTTP gateway contract with vanity addresses using try-catch funding strategy
@@ -212,7 +213,7 @@ export async function deployWithVanity(
     // ========================================
     console.log("📦 Step 1: WTTP Gateway Deployment");
     
-    const GatewayFactory = await hardhatRuntime.ethers.getContractFactory("WTTPGateway");
+    const GatewayFactory = new WTTPGateway__factory();
     
     gateway = await deployWithRetry(
       gatewaySigner,

@@ -238,11 +238,11 @@ export function encodeLanguage(language: string): string {
     const fullLanguage = language.split('-');
     const languageCode = languageToBytes[fullLanguage[0] as Language] || '0x0000';
     const regionCode = regionToBytes[fullLanguage[1] as Region] || '0x0000';
-    return (languageCode.slice(0, 3) + regionCode.slice(4)); // 0xXXYY XX is language code, YY is region code
+    return (languageCode.slice(0, 4) + regionCode.slice(4)); // 0xXXYY XX is language code, YY is region code
 }
 
 export function decodeLanguage(bytes: string): string {
-    const languageCode = bytes.slice(0, 3) + "00";
+    const languageCode = bytes.slice(0, 4) + "00";
     const regionCode = "0x00" + bytes.slice(4);
     const language = bytesToLanguage[languageCode as LanguageBytes] || '';
     const region = bytesToRegion[regionCode as RegionBytes] || '';

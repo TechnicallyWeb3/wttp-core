@@ -19,6 +19,7 @@ test/
 *.test.js
 *.spec.ts
 *.spec.js
+/test-*
 
 # Documentation that shouldn't be in package
 docs/
