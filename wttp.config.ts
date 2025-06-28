@@ -55,5 +55,23 @@ export const config: WttpConfig = {
                 "https://eth.meowrpc.com"
             ],
         },
+        137: {
+            name: 'Polygon POS',
+            alias: 'polygon',
+            symbol: 'MATIC',
+            explorer: 'https://polygonscan.com',
+            gateway: wttpDeployments.chains[137].gateway.contractAddress,
+            rpcsList: [
+                "https://polygon-bor-rpc.publicnode.com",
+                // "https://eth.llamarpc.com",
+                "https://1rpc.io/matic",
+                "https://polygon.drpc.org",
+                "https://polygon.meowrpc.com",
+                "https://endpoints.omniatech.io/v1/matic/mainnet/public",
+                "https://polygon-pokt.nodies.app",
+                "https://rpc.ankr.com/polygon",
+
+            ],
+        },
     }
 }
