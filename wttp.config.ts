@@ -62,9 +62,10 @@ export const config: WttpConfig = {
             explorer: 'https://polygonscan.com',
             gateway: wttpDeployments.chains[137].gateway.contractAddress,
             rpcsList: [
-                "https://polygon-bor-rpc.publicnode.com",
+                // "https://polygon-bor-rpc.publicnode.com",
                 // "https://eth.llamarpc.com",
                 "https://1rpc.io/matic",
+                "https://polygon-rpc.com",
                 "https://polygon.drpc.org",
                 "https://polygon.meowrpc.com",
                 "https://endpoints.omniatech.io/v1/matic/mainnet/public",
